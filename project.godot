@@ -10,12 +10,10 @@ config_version=5
 
 [application]
 
-; 모드 이름 수정
-config/name="MinsuMod"
+config/name="UndoMod-MS"
 config/features=PackedStringArray("4.5", "C#", "Mobile")
 config/icon="res://icon.svg"
 
 [dotnet]
 
-; 모드 이름 수정
-project/assembly_name="MinsuMod"
+project/assembly_name="UndoMod-MS"

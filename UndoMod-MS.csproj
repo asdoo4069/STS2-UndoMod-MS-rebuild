@@ -3,9 +3,9 @@
     <TargetFramework>net9.0</TargetFramework>
     <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">net9.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
-    <AssemblyName>MinsuMod</AssemblyName> <!-- 모드 이름 -->
-    <Sts2GamePath>D:\Games\Steam\steamapps\common\Slay the Spire 2</Sts2GamePath> <!-- 게임 경로 -->
-    <GodotPath>D:\WorkSpace\Megadot\MegaDot_v4.5.1-stable_mono_win64.exe</GodotPath> <!-- Megadot 경로 -->
+    <AssemblyName>UndoMod-MS</AssemblyName>
+    <Sts2GamePath>D:\Games\Steam\steamapps\common\Slay the Spire 2</Sts2GamePath>
+    <GodotPath>D:\WorkSpace\Megadot\MegaDot_v4.5.1-stable_mono_win64.exe</GodotPath>
     <NoWarn>$(NoWarn);MSB3270</NoWarn>
   </PropertyGroup>
 
@@ -37,4 +37,8 @@
           EnvironmentVariables="IsInnerGodotExport=true;MSBUILDDISABLENODEREUSE=1"
           ContinueOnError="WarnAndContinue" />
   </Target>
+
+  <!-- <Target Name="CopyToAndroid" AfterTargets="GodotPublish">
+    <Exec Command="&quot;D:\Utility\platform-tools\adb.exe&quot; push &quot;$(ModsPath)$(MSBuildProjectName)&quot; /storage/emulated/0/StS2LauncherMM/Mods/" />
+  </Target> -->
 </Project>

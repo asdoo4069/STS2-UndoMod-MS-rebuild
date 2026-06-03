@@ -1,12 +1,13 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MinsuMod", "MinsuMod.csproj", "{D9CC030D-0690-477B-ABA9-785722921DB9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UndoMod-MS", "UndoMod-MS.csproj", "{D9CC030D-0690-477B-ABA9-785722921DB9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-	Debug|Any CPU = Debug|Any CPU
-	ExportDebug|Any CPU = ExportDebug|Any CPU
-	ExportRelease|Any CPU = ExportRelease|Any CPU
+		Debug|Any CPU = Debug|Any CPU
+		ExportDebug|Any CPU = ExportDebug|Any CPU
+		ExportRelease|Any CPU = ExportRelease|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D9CC030D-0690-477B-ABA9-785722921DB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -15,5 +16,8 @@ Global
 		{D9CC030D-0690-477B-ABA9-785722921DB9}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
 		{D9CC030D-0690-477B-ABA9-785722921DB9}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
 		{D9CC030D-0690-477B-ABA9-785722921DB9}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal

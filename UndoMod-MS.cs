@@ -2,12 +2,12 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Logging;
 
-namespace MinsuMod; // 모드 이름 수정하기
+namespace UndoModMS; // 모드 이름 수정하기
 
 [ModInitializer("ModInit")]
 public static class ModStart
 {
-	public const string ModId = "MinsuMod"; // 모드 이름 수정하기
+	public const string ModId = "UndoMod-MS"; // 모드 이름 수정하기
 
 	public static void ModInit()
 	{
