@@ -21,8 +21,9 @@ public static class AnimDiePatch
 
     public static readonly HashSet<string> SkipReplacementMonsterTypes = new()
     {
-        "TestSubject",
-        "TheObscura",
+        "TestSubject", // 실험체
+        "TheObscura", // 영사자
+        "WaterfallGiant", // 폭포 거인
     };
 
     public static readonly HashSet<string> SpineDieCappedMonsterTypes = new()

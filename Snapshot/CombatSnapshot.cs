@@ -195,6 +195,7 @@ internal sealed class CombatSnapshot
             MaxHp = (int)(ReflectionCache.CreatureMaxHpField.GetValue(c) ?? 0),
             Block = (int)(ReflectionCache.CreatureBlockField.GetValue(c) ?? 0),
             IsDead = c.IsDead,
+            ShowsInfiniteHp = c.ShowsInfiniteHp,
         };
 
         foreach (var pm in c.Powers)
@@ -343,7 +344,7 @@ internal sealed class CombatSnapshot
                 var nc = room?.GetCreatureNode(c);
                 if (nc == null) continue;
                 var observed = TryReadSpineAnim(nc);
-                if (observed != null && IsTransientName(observed)) return true;
+                if (observed != null && IsTransientName(observed, c.IsDead)) return true;
             }
         }
         catch { }
@@ -353,10 +354,14 @@ internal sealed class CombatSnapshot
     private static readonly string[] TransientPatterns =
         { "attack", "cast", "hurt", "hit", "damage", "die", "death", "spawn" };
 
-    private static bool IsTransientName(string name)
+    private static bool IsTransientName(string name, bool isDead = true)
     {
         foreach (var s in TransientPatterns)
-            if (name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+        {
+            if (name.IndexOf(s, StringComparison.OrdinalIgnoreCase) < 0) continue;
+            if (!isDead && (s == "die" || s == "death")) continue;
+            return true;
+        }
         return false;
     }
 
@@ -558,6 +563,7 @@ internal struct CreatureSnapshot
     public int MaxHp;
     public int Block;
     public bool IsDead;
+    public bool ShowsInfiniteHp;
     public List<PowerSnapshot> Powers;
 
     public bool HadVisualNode;
