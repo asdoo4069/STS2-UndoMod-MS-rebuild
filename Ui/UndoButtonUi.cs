@@ -10,7 +10,6 @@ internal static class UndoButtonUi
 {
     private static Button? _button;
 
-    private static bool _isDragging;
     private static Vector2 _dragGrabOffset;
     private static Vector2 _dragStartPos;
     private const float DragMinPixels = 3f;
@@ -158,7 +157,6 @@ internal static class UndoButtonUi
         }
         catch { }
         _button = null;
-        _isDragging = false;
     }
 
     private static void OnPressed()
@@ -174,7 +172,6 @@ internal static class UndoButtonUi
         {
             if (mb.Pressed)
             {
-                _isDragging = false;
                 _dragStartPos = _button.Position;
                 _dragGrabOffset = mb.Position;
                 _button.AcceptEvent();
@@ -184,15 +181,8 @@ internal static class UndoButtonUi
                 var moved = (_button.Position - _dragStartPos).Length();
                 if (moved >= DragMinPixels)
                 {
-                    // 드래그로 판정 — reposition 저장, undo 억제.
-                    _isDragging = true;
                     ModSettings.SetIconPosition(_button.Position.X, _button.Position.Y);
                     UndoLogger.Info($"[Ui] icon repositioned to {_button.Position} — saved");
-                }
-                else
-                {
-                    // 클릭으로 판정 — Pressed 시그널에서 undo 실행되도록 플래그 해제.
-                    _isDragging = false;
                 }
                 _button.AcceptEvent();
             }
