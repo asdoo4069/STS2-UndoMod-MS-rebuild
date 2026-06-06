@@ -7,6 +7,8 @@
     <Sts2GamePath>D:\Games\Steam\steamapps\common\Slay the Spire 2</Sts2GamePath>
     <GodotPath>D:\WorkSpace\Megadot\MegaDot_v4.5.1-stable_mono_win64.exe</GodotPath>
     <NoWarn>$(NoWarn);MSB3270</NoWarn>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup Condition="Exists('$(Sts2GamePath)\data_sts2_windows_x86_64')">
