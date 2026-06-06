@@ -94,7 +94,7 @@ internal static class UndoButtonUi
         if (_button.Disabled != !canUndo)
         {
             _button.Disabled = !canUndo;
-            if (_button.Disabled) _button.Modulate = Colors.White;
+            if (!_button.Disabled) _button.Modulate = Colors.White;
         }
     }
 
@@ -163,8 +163,6 @@ internal static class UndoButtonUi
 
     private static void OnPressed()
     {
-        // LMB drag 종료 후 Pressed 시그널이 발화되는 경우 undo 억제.
-        if (_isDragging) return;
         UndoController.Undo();
     }
 
@@ -172,7 +170,7 @@ internal static class UndoButtonUi
     {
         if (_button == null || !GodotObject.IsInstanceValid(_button)) return;
 
-        if (ev is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left)
+        if (ev is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Right)
         {
             if (mb.Pressed)
             {
@@ -202,7 +200,7 @@ internal static class UndoButtonUi
         }
 
         if (ev is InputEventMouseMotion mm && _dragGrabOffset != Vector2.Zero
-            && Input.IsMouseButtonPressed(MouseButton.Left))
+            && Input.IsMouseButtonPressed(MouseButton.Right))
         {
             _button.Position += mm.Position - _dragGrabOffset;
             _button.AcceptEvent();
