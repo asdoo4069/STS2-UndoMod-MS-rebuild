@@ -69,6 +69,7 @@ internal static class UndoController
         var snap = Stack[target];
         Stack.RemoveRange(target, Stack.Count - target);
 
+        Patches.DeathAnimDelayPatch.DeathAnimActive.Clear();
         IsRestoring = true;
         try { SnapshotRestorer.Restore(snap); }
         catch (Exception ex) { UndoLogger.Warn($"[Undo] restore threw: {ex.Message}"); }

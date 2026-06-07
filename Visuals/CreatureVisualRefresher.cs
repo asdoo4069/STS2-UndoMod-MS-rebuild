@@ -126,7 +126,7 @@ internal static class CreatureVisualRefresher
                     && CombatSnapshot.IdleAnimCache.TryGetValue(live, out var cached))
                     desired = cached;
                 if (!string.IsNullOrEmpty(desired))
-                    TryRestoreSpineAnim(node, desired!);
+                    TryRestoreSpineAnim(node, desired!, saved);
             }
 
             try { _ = node?.RefreshIntents(); } catch { }
@@ -241,23 +241,14 @@ internal static class CreatureVisualRefresher
     private static readonly string[] TransientAnimSubstrings =
         ["attack", "cast", "hurt", "hit", "damage", "die", "death", "spawn"];
 
-    private static void TryRestoreSpineAnim(NCreature node, string animHint)
+    private static void TryRestoreSpineAnim(NCreature node, string animHint, in CreatureSnapshot saved)
     {
         try
         {
-            var visualsType = ReflectionCache.NCreatureVisualsType;
             var setAnim = ReflectionCache.SpineSetAnimationMethod;
-            var spineProp = ReflectionCache.NCVSpineAnimationProp;
-            if (visualsType == null || setAnim == null || spineProp == null) return;
+            if (setAnim == null) return;
 
-            object? visuals = null;
-            foreach (var n in SnapshotRestorer.WalkNodeTree(node))
-            {
-                if (visualsType.IsInstanceOfType(n)) { visuals = n; break; }
-            }
-            if (visuals == null) return;
-
-            var spine = spineProp.GetValue(visuals);
+            var spine = ReflectionCache.NCreatureSpineAnimationProp?.GetValue(node);
             if (spine == null) return;
 
             string? currentName = null;
@@ -282,21 +273,31 @@ internal static class CreatureVisualRefresher
                     || animHint.Contains("idle", StringComparison.OrdinalIgnoreCase)))
                 target = animHint;
             else if (currentName != null && IsTransient(currentName))
-                target = "idle_loop";
+                target = saved.IsDead ? "die_loop" : "idle_loop";
 
             if (target == null) return;
-            if (string.Equals(currentName, target, StringComparison.Ordinal)) return;
 
             try
             {
-                var spineBodyProp = HarmonyLib.AccessTools.Property(visualsType, "SpineBody");
-                var megaSprite = spineBodyProp?.GetValue(visuals);
-                var skel = ReflectionCache.MegaSpriteGetSkeletonMethod?.Invoke(megaSprite, null);
-                if (skel != null)
+                var visualsType = ReflectionCache.NCreatureVisualsType;
+                object? visuals = null;
+                if (visualsType != null)
+                    foreach (var n in SnapshotRestorer.WalkNodeTree(node))
+                        if (visualsType.IsInstanceOfType(n)) { visuals = n; break; }
+
+                if (visuals != null)
                 {
-                    ReflectionCache.SkeletonSetSlotsToSetupPoseMethod?.Invoke(skel, null);
-                    HarmonyLib.AccessTools.Method(skel.GetType(), "SetBonesToSetupPose")?.Invoke(skel, null);
-                    HarmonyLib.AccessTools.Method(skel.GetType(), "SetToSetupPose")?.Invoke(skel, null);
+                    var spineBodyProp = HarmonyLib.AccessTools.Property(visualsType!, "SpineBody");
+                    var megaSprite = spineBodyProp?.GetValue(visuals);
+                    var skel = ReflectionCache.MegaSpriteGetSkeletonMethod?.Invoke(megaSprite, null);
+                    if (skel != null && !saved.IsDead)
+                    {
+                        ReflectionCache.SkeletonSetSlotsToSetupPoseMethod?.Invoke(skel, null);
+                        HarmonyLib.AccessTools.Method(skel.GetType(), "SetBonesToSetupPose")?.Invoke(skel, null);
+                        HarmonyLib.AccessTools.Method(skel.GetType(), "SetToSetupPose")?.Invoke(skel, null);
+                    }
+
+                    try { HarmonyLib.AccessTools.Method(megaSprite?.GetType(), "SetTimeScale")?.Invoke(megaSprite, [1f]); } catch { }
                 }
             }
             catch (Exception ex) { UndoLogger.Warn($"[CreatureVisual] setup-pose reset failed: {ex.Message}"); }
@@ -309,37 +310,25 @@ internal static class CreatureVisualRefresher
             }
 
             try { HarmonyLib.AccessTools.Method(spine.GetType(), "SetTimeScale")?.Invoke(spine, [1f]); } catch { }
-            try
-            {
-                var megaSprite = HarmonyLib.AccessTools.Property(visualsType, "SpineBody")?.GetValue(visuals);
-                if (megaSprite != null)
-                    HarmonyLib.AccessTools.Method(megaSprite.GetType(), "SetTimeScale")?.Invoke(megaSprite, [1f]);
-            }
-            catch { }
 
-            bool targetIsIncapacitated =
-                target.Contains("stun", StringComparison.OrdinalIgnoreCase)
-                || target.Contains("knock", StringComparison.OrdinalIgnoreCase)
-                || target.Contains("freeze", StringComparison.OrdinalIgnoreCase)
-                || target.Contains("sleep", StringComparison.OrdinalIgnoreCase)
-                || target.Contains("daze", StringComparison.OrdinalIgnoreCase);
-
-            if (!targetIsIncapacitated)
+            // track 1~3: 스냅샷에 저장된 값으로 복원. null이었으면 현재 트랙 클리어.
+            var trackSnaps = new[] { saved.SpineAnimNameTrack1, saved.SpineAnimNameTrack2, saved.SpineAnimNameTrack3 };
+            for (int ti = 1; ti <= 3; ti++)
             {
-                for (int ti = 1; ti <= 3; ti++)
+                try
                 {
-                    try
+                    var snapAnim = trackSnaps[ti - 1];
+                    if (!string.IsNullOrEmpty(snapAnim)) setAnim.Invoke(spine, [snapAnim, true, ti]);
+                    else
                     {
                         var t = ReflectionCache.SpineGetCurrentTrackMethod?.Invoke(spine, [ti]);
                         if (t == null) continue;
                         var a = ReflectionCache.TrackGetAnimationMethod?.Invoke(t, null);
                         if (a == null) continue;
-                        var n = HarmonyLib.AccessTools.Method(a.GetType(), "GetName")?.Invoke(a, null) as string;
-                        if (string.IsNullOrEmpty(n) || string.Equals(n, target, StringComparison.Ordinal)) continue;
                         setAnim.Invoke(spine, [target, true, ti]);
                     }
-                    catch { }
                 }
+                catch { }
             }
         }
         catch (Exception ex) { UndoLogger.Warn($"[CreatureVisual] spine restore failed: {ex.Message}"); }

@@ -292,21 +292,34 @@ internal sealed class CombatSnapshot
                 }
                 catch { }
 
-                var observed = TryReadSpineAnim(nc);
-                if (observed != null && IsLoopShaped(observed))
+                bool deathAnimActive = Patches.DeathAnimDelayPatch.DeathAnimActive.Contains(c);
+                if (deathAnimActive)
                 {
-                    snap.SpineAnimNameTrack0 = observed;
-                    if (IsTrueIdleLoop(observed))
-                        IdleAnimCache[c] = observed;
-                }
-                else if (!c.IsDead && IdleAnimCache.TryGetValue(c, out var stable))
-                {
-                    snap.SpineAnimNameTrack0 = stable;
+                    snap.SpineAnimNameTrack0 = "die_loop";
                 }
                 else
                 {
-                    snap.SpineAnimNameTrack0 = null;
+                    var observed = TryReadSpineAnim(nc);
+                    if (observed != null && IsLoopShaped(observed))
+                    {
+                        snap.SpineAnimNameTrack0 = observed;
+                        if (IsTrueIdleLoop(observed))
+                            IdleAnimCache[c!] = observed;
+                    }
+                    else if (observed == null && IdleAnimCache.TryGetValue(c!, out var stable))
+                    {
+                        snap.SpineAnimNameTrack0 = stable;
+                    }
+                    else
+                    {
+                        snap.SpineAnimNameTrack0 = null;
+                    }
                 }
+
+                // track 1~3: 있는 그대로 캡처 (null = 트랙 비어있었음)
+                snap.SpineAnimNameTrack1 = TryReadSpineAnim(nc, 1);
+                snap.SpineAnimNameTrack2 = TryReadSpineAnim(nc, 2);
+                snap.SpineAnimNameTrack3 = TryReadSpineAnim(nc, 3);
             }
         }
 
@@ -325,7 +338,7 @@ internal sealed class CombatSnapshot
         if (!IsLoopShaped(name)) return false;
         var lower = name.ToLowerInvariant();
         return !lower.Contains("stun") && !lower.Contains("knock") && !lower.Contains("freeze")
-            && !lower.Contains("sleep") && !lower.Contains("daze");
+            && !lower.Contains("sleep") && !lower.Contains("daze") && !lower.Contains("die");
     }
 
     public static bool AnyCreatureMidTransient()
@@ -416,7 +429,7 @@ internal sealed class CombatSnapshot
             if (getName?.Invoke(anim, null) is string s && !string.IsNullOrEmpty(s)) return s;
             return null;
         }
-        catch (Exception ex) { UndoLogger.Warn($"[Snapshot] spine anim read failed: {ex.Message}"); return null; }
+        catch { return null; }
     }
 
     internal static IEnumerable<Node> EnumerateTree(Node root)
@@ -574,6 +587,9 @@ internal struct CreatureSnapshot
     public Color VisualBodyModulate = Colors.White;
 
     public string? SpineAnimNameTrack0;
+    public string? SpineAnimNameTrack1;
+    public string? SpineAnimNameTrack2;
+    public string? SpineAnimNameTrack3;
 
     public float? Hue;
     public double? LiquidOverlayTimer;

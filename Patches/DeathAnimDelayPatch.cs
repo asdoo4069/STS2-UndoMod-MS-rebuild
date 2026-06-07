@@ -1,4 +1,5 @@
 using HarmonyLib;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 
 namespace UndoModMS.Patches;
@@ -10,23 +11,31 @@ public static class DeathAnimDelayPatch
 
     private static readonly Dictionary<ulong, (Godot.Timer timer, NCreature creature, bool arg)> _pending = new();
     private static bool _bypass;
+    public static readonly HashSet<Creature> DeathAnimActive = new(ReferenceEqualityComparer.Instance);
 
     [HarmonyPrefix]
     public static bool Prefix(NCreature __instance, bool __0)
     {
-        if (_bypass) return true;
+        if (_bypass)
+        {
+            if (__instance.Entity != null) DeathAnimActive.Add(__instance.Entity);
+            return true;
+        }
 
         try
         {
             if (!Godot.GodotObject.IsInstanceValid(__instance)) return true;
 
+            // SkipReplacementMonsterTypes 분기
             if (TryGetMonsterTypeName(__instance) is { } typeName
                 && AnimDiePatch.SkipReplacementMonsterTypes.Contains(typeName))
             {
+                if (__instance.Entity != null) DeathAnimActive.Add(__instance.Entity);
                 UndoLogger.Warn($"[DeathDefer] monster={typeName} instId={__instance.GetInstanceId()} on AnimDie skiplist — running vanilla StartDeathAnim immediately");
                 return true;
             }
 
+            // ReviveLikePower 분기
             if (HasReviveLikePower(__instance) is { } powerName)
             {
                 UndoLogger.Warn($"[DeathDefer] creature has revive-like power '{powerName}' instId={__instance.GetInstanceId()} — running vanilla StartDeathAnim immediately");
@@ -98,6 +107,7 @@ public static class DeathAnimDelayPatch
         }
         _pending.Clear();
         UndoLogger.Info($"[DeathDefer] aborted {aborted} pending death anim(s) for undo");
+        DeathAnimActive.Clear();
         return aborted;
     }
 

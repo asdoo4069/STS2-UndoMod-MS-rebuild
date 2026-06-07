@@ -246,6 +246,8 @@ internal static class ReflectionCache
     // Spine animation handles
     public static readonly Type? NCreatureVisualsType =
         AccessTools.TypeByName("MegaCrit.Sts2.Core.Nodes.Combat.NCreatureVisuals");
+    public static readonly PropertyInfo? NCreatureSpineAnimationProp =
+        AccessTools.Property(typeof(NCreature), "SpineAnimation");
     public static readonly PropertyInfo? NCVSpineAnimationProp =
         NCreatureVisualsType != null ? AccessTools.Property(NCreatureVisualsType, "SpineAnimation") : null;
 
