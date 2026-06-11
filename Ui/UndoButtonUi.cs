@@ -53,8 +53,8 @@ internal static class UndoButtonUi
         Vector2 anchorPos = ReadPosition(anchor);
         Vector2 anchorSize = ReadSize(anchor);
         Vector2 defaultPos = anchorPos + new Vector2(
-            -btn.CustomMinimumSize.X - 20,
-            -anchorSize.Y * 0.35f - 12 + btn.CustomMinimumSize.Y * 0.5f);
+            anchorSize.X + btn.CustomMinimumSize.X * 0.2f,
+            -(anchorSize.Y * 1.5f + btn.CustomMinimumSize.Y));
 
         var savedX = ModSettings.Data.IconX;
         var savedY = ModSettings.Data.IconY;
@@ -252,7 +252,7 @@ internal static class UndoButtonUi
         {
             foreach (var n in Snapshot.SnapshotRestorer.WalkNodeTree(root))
             {
-                if (n.GetType().Name == "NEnergyCounter") return n;
+                if (n.GetType().Name == "NEndTurnButton") return n;
             }
             return null;
         }
