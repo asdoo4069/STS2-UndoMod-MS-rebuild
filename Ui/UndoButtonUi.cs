@@ -13,6 +13,7 @@ internal static class UndoButtonUi
     private static Vector2 _dragGrabOffset;
     private static Vector2 _dragStartPos;
     private const float DragMinPixels = 3f;
+    private static bool _isDragging;
 
     private static readonly Color BgNormal = Color.FromHtml("#1F140B");
     private static readonly Color BgHover = Color.FromHtml("#34220F");
@@ -47,7 +48,6 @@ internal static class UndoButtonUi
             MouseDefaultCursorShape = Control.CursorShape.PointingHand,
         };
         ApplyTheme(btn);
-        btn.Pressed += OnPressed;
         btn.GuiInput += OnButtonGuiInput;
 
         Vector2 anchorPos = ReadPosition(anchor);
@@ -150,7 +150,6 @@ internal static class UndoButtonUi
         {
             if (GodotObject.IsInstanceValid(_button))
             {
-                _button.Pressed -= OnPressed;
                 _button.GuiInput -= OnButtonGuiInput;
                 _button.QueueFree();
             }
@@ -159,38 +158,46 @@ internal static class UndoButtonUi
         _button = null;
     }
 
-    private static void OnPressed()
-    {
-        UndoController.Undo();
-    }
-
     private static void OnButtonGuiInput(InputEvent ev)
     {
         if (_button == null || !GodotObject.IsInstanceValid(_button)) return;
 
-        if (ev is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Right)
+        // LEFT BUTTON drag start
+        if (ev is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left)
         {
             if (mb.Pressed)
             {
+                _isDragging = true;
                 _dragStartPos = _button.Position;
                 _dragGrabOffset = mb.Position;
                 _button.AcceptEvent();
             }
             else
             {
+                _isDragging = false;
+
                 var moved = (_button.Position - _dragStartPos).Length();
-                if (moved >= DragMinPixels)
+                if (moved < DragMinPixels)
                 {
+                    // click → Undo
+                    UndoController.Undo();
+                }
+                else
+                {
+                    // drag end → save position
                     ModSettings.SetIconPosition(_button.Position.X, _button.Position.Y);
                     UndoLogger.Info($"[Ui] icon repositioned to {_button.Position} — saved");
                 }
+
                 _button.AcceptEvent();
             }
             return;
         }
 
-        if (ev is InputEventMouseMotion mm && _dragGrabOffset != Vector2.Zero
-            && Input.IsMouseButtonPressed(MouseButton.Right))
+        // LEFT drag motion
+        if (ev is InputEventMouseMotion mm
+            && _isDragging
+            && Input.IsMouseButtonPressed(MouseButton.Left))
         {
             _button.Position += mm.Position - _dragGrabOffset;
             _button.AcceptEvent();
