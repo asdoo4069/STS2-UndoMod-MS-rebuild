@@ -1,33 +1,26 @@
 using System.Text.Json;
+using Godot;
 
 namespace UndoModMS;
 
 internal static class ModSettings
 {
-    private const string FileName = "settings.json";
     private static readonly Lock IoLock = new();
     private static SettingsData _data = new();
-    private static string? _path;
     private static bool _loaded;
+
+    private const string ConfigDir = "user://ModConfig/";
+    private const string FileName = "UndoMod-MS-settings.json";
+
+    private static string GetPath()
+    {
+        return ConfigDir + FileName;
+    }
 
     public class SettingsData
     {
         public float? IconX { get; set; }
         public float? IconY { get; set; }
-    }
-
-    public static string Path
-    {
-        get
-        {
-            if (_path != null) return _path;
-            var dir = System.IO.Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "UndoMod-MS");
-            Directory.CreateDirectory(dir);
-            _path = System.IO.Path.Combine(dir, FileName);
-            return _path;
-        }
     }
 
     public static SettingsData Data
@@ -46,11 +39,20 @@ internal static class ModSettings
             _loaded = true;
             try
             {
-                if (!File.Exists(Path)) return;
-                var text = File.ReadAllText(Path);
-                if (string.IsNullOrWhiteSpace(text)) return;
+                var path = GetPath();
+
+                if (!Godot.FileAccess.FileExists(path))
+                    return;
+
+                using var file = Godot.FileAccess.Open(path, Godot.FileAccess.ModeFlags.Read);
+                var text = file.GetAsText();
+
+                if (string.IsNullOrWhiteSpace(text))
+                    return;
+
                 var parsed = JsonSerializer.Deserialize<SettingsData>(text);
-                if (parsed != null) _data = parsed;
+                if (parsed != null)
+                    _data = parsed;
             }
             catch (Exception ex)
             {
@@ -65,11 +67,16 @@ internal static class ModSettings
         {
             try
             {
+                var path = GetPath();
+                DirAccess.MakeDirRecursiveAbsolute(ConfigDir);
+
                 var text = JsonSerializer.Serialize(_data, new JsonSerializerOptions
                 {
                     WriteIndented = true,
                 });
-                File.WriteAllText(Path, text);
+
+                using var file = Godot.FileAccess.Open(path, Godot.FileAccess.ModeFlags.Write);
+                file.StoreString(text);
             }
             catch (Exception ex)
             {
