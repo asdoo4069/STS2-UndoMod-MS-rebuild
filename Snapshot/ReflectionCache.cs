@@ -250,6 +250,8 @@ internal static class ReflectionCache
         AccessTools.Property(typeof(NCreature), "SpineAnimation");
     public static readonly PropertyInfo? NCVSpineAnimationProp =
         NCreatureVisualsType != null ? AccessTools.Property(NCreatureVisualsType, "SpineAnimation") : null;
+    public static readonly PropertyInfo? NCVSpineBodyProp =
+        NCreatureVisualsType != null ? AccessTools.Property(NCreatureVisualsType, "SpineBody") : null;
 
     // Liquid-overlay shader
     public static readonly FieldInfo? NCVHueField =

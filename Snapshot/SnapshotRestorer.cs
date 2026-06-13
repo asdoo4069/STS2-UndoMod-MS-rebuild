@@ -1,3 +1,4 @@
+using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -16,7 +17,7 @@ namespace UndoModMS.Snapshot;
 
 internal static class SnapshotRestorer
 {
-    public static void Restore(CombatSnapshot snap)
+    public static async Task Restore(CombatSnapshot snap)
     {
         var cm = CombatManager.Instance;
         if (cm == null) { UndoLogger.Warn("[Restore] CombatManager null"); return; }
@@ -67,6 +68,9 @@ internal static class SnapshotRestorer
             if (ev?.GetValue(cm) is Delegate d) d.DynamicInvoke(cs);
         });
 
+        await WaitOneFrameAsync();
+        Try("CreatureVisualsDeferred", () => CreatureVisualRefresher.Refresh(snap));
+
         UndoLogger.Info("[Restore] complete");
     }
 
@@ -79,10 +83,10 @@ internal static class SnapshotRestorer
             try
             {
                 var prop = AccessTools.Property(typeof(NCombatRoom), name);
-                if (prop?.GetValue(room) is not Godot.Node container) continue;
-                foreach (Godot.Node ch in container.GetChildren())
+                if (prop?.GetValue(room) is not Node container) continue;
+                foreach (Node ch in container.GetChildren())
                 {
-                    try { if (Godot.GodotObject.IsInstanceValid(ch)) ch.QueueFree(); } catch { }
+                    try { if (GodotObject.IsInstanceValid(ch)) ch.QueueFree(); } catch { }
                 }
             }
             catch (Exception ex) { UndoLogger.Warn($"[CombatVfx] sweep {name}: {ex.Message}"); }
@@ -92,10 +96,11 @@ internal static class SnapshotRestorer
         {
             foreach (var ncreature in NCombatRoom.Instance!.CreatureNodes)
             {
-                if (ncreature == null || !Godot.GodotObject.IsInstanceValid(ncreature)) continue;
+                if (ncreature == null || !GodotObject.IsInstanceValid(ncreature)) continue;
                 foreach (var node in CombatSnapshot.EnumerateTree(ncreature))
                 {
                     if (node == null || node == ncreature) continue;
+                    try { if (ncreature.Visuals != null && ncreature.Visuals.IsAncestorOf(node)) continue; } catch { }
                     var t = node.GetType().Name;
                     if (!t.Contains("Vfx") && !t.EndsWith("Effect")) continue;
                     try { node.QueueFree(); } catch { }
@@ -105,7 +110,7 @@ internal static class SnapshotRestorer
         catch (Exception ex) { UndoLogger.Warn($"[CreatureVfx] sweep failed: {ex.Message}"); }
     }
 
-    private static void ResetReticleCancelTokens(Godot.Node ncreature, uint combatId)
+    private static void ResetReticleCancelTokens(Node ncreature, uint combatId)
     {
         try
         {
@@ -131,14 +136,14 @@ internal static class SnapshotRestorer
         var isSelectedSetter = reticleType != null ? AccessTools.PropertySetter(reticleType, "IsSelected") : null;
         foreach (var ncreature in room.CreatureNodes)
         {
-            if (ncreature == null || !Godot.GodotObject.IsInstanceValid(ncreature)) continue;
+            if (ncreature == null || !GodotObject.IsInstanceValid(ncreature)) continue;
             foreach (var node in CombatSnapshot.EnumerateTree(ncreature))
             {
                 if (node == null || reticleType == null || !reticleType.IsInstanceOfType(node)) continue;
                 try
                 {
                     onDeselect?.Invoke(node, null);
-                    if (node is Godot.CanvasItem ci) ci.Modulate = Godot.Colors.Transparent;
+                    if (node is CanvasItem ci) ci.Modulate = Colors.Transparent;
                     isSelectedSetter?.Invoke(node, [false]);
                 }
                 catch (Exception ex) { UndoLogger.Warn($"[Reticle] clear: {ex.Message}"); }
@@ -374,8 +379,8 @@ internal static class SnapshotRestorer
                         node.ToggleIsInteractable(true);
                         if (node.Hitbox != null)
                         {
-                            node.Hitbox.MouseFilter = Godot.Control.MouseFilterEnum.Stop;
-                            node.Hitbox.FocusMode = Godot.Control.FocusModeEnum.All;
+                            node.Hitbox.MouseFilter = Control.MouseFilterEnum.Stop;
+                            node.Hitbox.FocusMode = Control.FocusModeEnum.All;
                             node.Hitbox.Visible = true;
                         }
                         foreach (var fieldName in new[] { "<IsFocused>k__BackingField", "_isFocused", "isFocused" })
@@ -439,10 +444,10 @@ internal static class SnapshotRestorer
                                 body.Position = saved.VisualBodyPosition;
                                 body.Rotation = saved.VisualBodyRotation;
                                 body.Visible = true;
-                                if (body is Godot.CanvasItem bodyCi)
+                                if (body is CanvasItem bodyCi)
                                     bodyCi.Modulate = saved.VisualBodyModulate;
                             }
-                            if (node.Visuals is Godot.Node2D visualsN2D)
+                            if (node.Visuals is Node2D visualsN2D)
                                 visualsN2D.Visible = true;
                         }
                         catch { }
@@ -472,9 +477,9 @@ internal static class SnapshotRestorer
             if (visuals == null) return;
 
             var bodyField = AccessTools.Field(visuals.GetType(), "_body");
-            var liveBody = bodyField?.GetValue(visuals) as Godot.Node;
+            var liveBody = bodyField?.GetValue(visuals) as Node;
 
-            bool liveOk = liveBody != null && Godot.GodotObject.IsInstanceValid(liveBody);
+            bool liveOk = liveBody != null && GodotObject.IsInstanceValid(liveBody);
             try { if (liveOk) liveOk = liveBody!.IsInsideTree(); } catch { liveOk = false; }
 
             bool parentOk = false;
@@ -491,17 +496,17 @@ internal static class SnapshotRestorer
                 {
                     var oldParent = liveBody!.GetParent();
                     if (oldParent != null) oldParent.RemoveChild(liveBody);
-                    if (visuals is Godot.Node visualsNode2)
+                    if (visuals is Node visualsNode2)
                     {
                         visualsNode2.AddChild(liveBody);
                         bodyField?.SetValue(visuals, liveBody);
-                        if (liveBody is Godot.Node2D body2d)
+                        if (liveBody is Node2D body2d)
                         {
                             try { body2d.Position = saved.VisualBodyPosition; } catch { }
                             try { body2d.Scale = saved.VisualBodyScale; } catch { }
                             try { body2d.Rotation = saved.VisualBodyRotation; } catch { }
                             try { body2d.Visible = true; } catch { }
-                            try { if (body2d is Godot.CanvasItem bodyCi) bodyCi.Modulate = saved.VisualBodyModulate; } catch { }
+                            try { if (body2d is CanvasItem bodyCi) bodyCi.Modulate = saved.VisualBodyModulate; } catch { }
                         }
                     }
                     return;
@@ -511,7 +516,7 @@ internal static class SnapshotRestorer
 
             if (saved.BodyRef == null) return;
 
-            bool savedValid = Godot.GodotObject.IsInstanceValid(saved.BodyRef);
+            bool savedValid = GodotObject.IsInstanceValid(saved.BodyRef);
             if (!savedValid) return;
 
             try
@@ -523,7 +528,7 @@ internal static class SnapshotRestorer
 
             try
             {
-                if (visuals is Godot.Node visualsNode)
+                if (visuals is Node visualsNode)
                 {
                     visualsNode.AddChild(saved.BodyRef);
                     bodyField?.SetValue(visuals, saved.BodyRef);
@@ -541,7 +546,7 @@ internal static class SnapshotRestorer
             MegaCrit.Sts2.Core.Nodes.Combat.NCreature? zombie = null;
 
             if (AnimDiePatch.DetachedZombies.TryGetValue(creature, out var detached)
-                && detached != null && Godot.GodotObject.IsInstanceValid(detached))
+                && detached != null && GodotObject.IsInstanceValid(detached))
             {
                 zombie = detached;
                 UndoLogger.Info($"[Revive] id={combatId} in-place: zombie found in DetachedZombies registry");
@@ -587,7 +592,7 @@ internal static class SnapshotRestorer
                     var containerField = creature.Side == CombatSide.Enemy
                         ? AccessTools.Field(typeof(NCombatRoom), "_enemyContainer")
                         : AccessTools.Field(typeof(NCombatRoom), "_allyContainer");
-                    if (containerField?.GetValue(room) is Godot.Node container)
+                    if (containerField?.GetValue(room) is Node container)
                         container.AddChild(zombie);
                 }
             }
@@ -599,20 +604,20 @@ internal static class SnapshotRestorer
             {
                 if (AnimDiePatch.ActiveFadeTweens.TryGetValue(zombie, out var fadeTw))
                 {
-                    if (fadeTw != null && Godot.GodotObject.IsInstanceValid(fadeTw) && fadeTw.IsValid())
+                    if (fadeTw != null && GodotObject.IsInstanceValid(fadeTw) && fadeTw.IsValid())
                         fadeTw.Kill();
                     AnimDiePatch.ActiveFadeTweens.Remove(zombie);
                 }
 
                 var m = zombie.Modulate;
-                zombie.Modulate = new Godot.Color(m.R, m.G, m.B, 1f);
+                zombie.Modulate = new Color(m.R, m.G, m.B, 1f);
 
                 try
                 {
-                    if (zombie.Body is Godot.CanvasItem bodyCi)
+                    if (zombie.Body is CanvasItem bodyCi)
                     {
                         var bm = bodyCi.Modulate;
-                        bodyCi.Modulate = new Godot.Color(bm.R, bm.G, bm.B, 1f);
+                        bodyCi.Modulate = new Color(bm.R, bm.G, bm.B, 1f);
                     }
                 }
                 catch { }
@@ -640,12 +645,12 @@ internal static class SnapshotRestorer
     {
         try
         {
-            if (node.Visuals is not Godot.Node visualsNode) return;
+            if (node.Visuals is not Node visualsNode) return;
 
             try
             {
                 var body = node.Body;
-                if (body != null && Godot.GodotObject.IsInstanceValid(body) && body.GetParent() == null)
+                if (body != null && GodotObject.IsInstanceValid(body) && body.GetParent() == null)
                     visualsNode.AddChild(body);
             }
             catch (Exception ex) { UndoLogger.Warn($"[Reattach] id={combatId} body re-attach: {ex.Message}"); }
@@ -657,7 +662,7 @@ internal static class SnapshotRestorer
                 {
                     var spineBodyProp = AccessTools.Property(visualsType, "SpineBody");
                     var spineBody = spineBodyProp?.GetValue(node.Visuals);
-                    if (spineBody is Godot.Node spineN && Godot.GodotObject.IsInstanceValid(spineN))
+                    if (spineBody is Node spineN && GodotObject.IsInstanceValid(spineN))
                     {
                         if (spineN.GetParent() == null)
                         {
@@ -665,7 +670,7 @@ internal static class SnapshotRestorer
                             if (body != null) body.AddChild(spineN);
                             else visualsNode.AddChild(spineN);
                         }
-                        if (spineBody is Godot.CanvasItem spineCi) spineCi.Visible = true;
+                        if (spineBody is CanvasItem spineCi) spineCi.Visible = true;
                     }
                 }
             }
@@ -679,17 +684,17 @@ internal static class SnapshotRestorer
     {
         try
         {
-            if (node.Visuals is not Godot.Node visualsNode) return;
-            if (!Godot.GodotObject.IsInstanceValid(visualsNode)) return;
+            if (node.Visuals is not Node visualsNode) return;
+            if (!GodotObject.IsInstanceValid(visualsNode)) return;
 
-            Godot.Node? currentParent = null;
+            Node? currentParent = null;
             try { currentParent = visualsNode.GetParent(); } catch { }
             if (ReferenceEquals(currentParent, node)) return;
 
-            Godot.Vector2 globalPosBefore = Godot.Vector2.Zero;
+            Vector2 globalPosBefore = Vector2.Zero;
             float globalRotBefore = 0f;
-            Godot.Vector2 globalScaleBefore = Godot.Vector2.One;
-            if (visualsNode is Godot.Node2D vn2dBefore)
+            Vector2 globalScaleBefore = Vector2.One;
+            if (visualsNode is Node2D vn2dBefore)
             {
                 try { globalPosBefore = vn2dBefore.GlobalPosition; } catch { }
                 try { globalRotBefore = vn2dBefore.GlobalRotation; } catch { }
@@ -702,7 +707,7 @@ internal static class SnapshotRestorer
             try { node.AddChild(visualsNode); }
             catch (Exception ex) { UndoLogger.Warn($"[Reparent] id={combatId} AddChild failed: {ex.Message}"); return; }
 
-            if (visualsNode is Godot.Node2D vn2dAfter)
+            if (visualsNode is Node2D vn2dAfter)
             {
                 try { vn2dAfter.GlobalPosition = globalPosBefore; } catch { }
                 try { vn2dAfter.GlobalRotation = globalRotBefore; } catch { }
@@ -717,9 +722,7 @@ internal static class SnapshotRestorer
     {
         try
         {
-            var cts = ReflectionCache.NCreatureDeathAnimCancelTokenProp?.GetValue(zombie)
-                as CancellationTokenSource;
-            if (cts != null)
+            if (ReflectionCache.NCreatureDeathAnimCancelTokenProp?.GetValue(zombie) is CancellationTokenSource cts)
             {
                 bool alreadyCancelled = false;
                 try { alreadyCancelled = cts.IsCancellationRequested; } catch { }
@@ -739,7 +742,7 @@ internal static class SnapshotRestorer
         if (field == null) return;
         try
         {
-            if (field.GetValue(owner) is Godot.Tween t && t.IsValid())
+            if (field.GetValue(owner) is Tween t && t.IsValid())
                 t.Kill();
         }
         catch (Exception ex) { UndoLogger.Warn($"[Revive] id={combatId} kill {label}: {ex.Message}"); }
@@ -759,8 +762,7 @@ internal static class SnapshotRestorer
                 var bodyField = AccessTools.Field(visualsType, "_body");
                 if (bodyField != null)
                 {
-                    var body = bodyField.GetValue(visuals) as Godot.Node;
-                    if (body == null || !Godot.GodotObject.IsInstanceValid(body)) return true;
+                    if (bodyField.GetValue(visuals) is not Node body || !GodotObject.IsInstanceValid(body)) return true;
                 }
 
                 var spineBodyProp = AccessTools.Property(visualsType, "SpineBody");
@@ -769,7 +771,7 @@ internal static class SnapshotRestorer
                     object? spineBody;
                     try { spineBody = spineBodyProp.GetValue(visuals); } catch { return true; }
                     if (spineBody == null) return true;
-                    if (spineBody is Godot.GodotObject go && !Godot.GodotObject.IsInstanceValid(go)) return true;
+                    if (spineBody is GodotObject go && !GodotObject.IsInstanceValid(go)) return true;
                 }
             }
         }
@@ -777,9 +779,9 @@ internal static class SnapshotRestorer
         return false;
     }
 
-    internal static IEnumerable<Godot.Node> WalkNodeTree(Godot.Node root)
+    internal static IEnumerable<Node> WalkNodeTree(Node root)
     {
-        var stack = new Stack<Godot.Node>();
+        var stack = new Stack<Node>();
         stack.Push(root);
         while (stack.Count > 0)
         {
@@ -846,9 +848,9 @@ internal static class SnapshotRestorer
         EvictCreatureFromAllRoomCaches(room, creature, zombies, combatId);
     }
 
-    private static IEnumerable<MegaCrit.Sts2.Core.Nodes.Combat.NCreature> EnumerateAllNCreatureNodes(Godot.Node root)
+    private static IEnumerable<MegaCrit.Sts2.Core.Nodes.Combat.NCreature> EnumerateAllNCreatureNodes(Node root)
     {
-        var stack = new Stack<Godot.Node>();
+        var stack = new Stack<Node>();
         stack.Push(root);
         while (stack.Count > 0)
         {
@@ -1135,8 +1137,7 @@ internal static class SnapshotRestorer
 
     private static void RestoreCreaturePowers(Creature creature, CreatureSnapshot saved)
     {
-        var liveList = ReflectionCache.CreaturePowersField.GetValue(creature) as System.Collections.IList;
-        if (liveList == null) return;
+        if (ReflectionCache.CreaturePowersField.GetValue(creature) is not System.Collections.IList liveList) return;
 
         var liveSet = new HashSet<PowerModel>();
         foreach (var item in liveList)
@@ -1170,8 +1171,7 @@ internal static class SnapshotRestorer
             ReflectionCache.PowerAmountOnTurnStartField.SetValue(live, snapPower.AmountOnTurnStart);
             ReflectionCache.PowerSkipField.SetValue(live, snapPower.SkipNextDurationTick);
 
-            if (ReflectionCache.PowerInternalDataField != null)
-                ReflectionCache.PowerInternalDataField.SetValue(live, DeepCloner.CloneObject(snapPower.InternalDataClone));
+            ReflectionCache.PowerInternalDataField?.SetValue(live, DeepCloner.CloneObject(snapPower.InternalDataClone));
 
             if (snapPower.Clone != null && live.GetType() == snapPower.Clone.GetType())
             {
@@ -1231,7 +1231,7 @@ internal static class SnapshotRestorer
                 list.Add(f);
             }
         }
-        return list.ToArray();
+        return [.. list];
     }
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, FieldInfo[]> _powerCopyFieldCache = new();
@@ -1255,7 +1255,7 @@ internal static class SnapshotRestorer
                 list.Add(f);
             }
         }
-        return list.ToArray();
+        return [.. list];
     }
 
     private static void RestoreOrbs(CombatSnapshot snap, CombatState cs)
@@ -1394,5 +1394,23 @@ internal static class SnapshotRestorer
         if (prop?.CanWrite == true) { prop.SetValue(target, value); return; }
         var field = AccessTools.Field(target.GetType(), $"<{name}>k__BackingField");
         field?.SetValue(target, value);
+    }
+
+    private static async Task WaitOneFrameAsync()
+    {
+        if (Engine.GetMainLoop() is not SceneTree tree)
+            return;
+
+        TaskCompletionSource<bool> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        Callable cb = default;
+        cb = Callable.From(() =>
+        {
+            if (tree.IsConnected(SceneTree.SignalName.ProcessFrame, cb))
+                tree.Disconnect(SceneTree.SignalName.ProcessFrame, cb);
+            tcs.TrySetResult(true);
+        });
+
+        tree.Connect(SceneTree.SignalName.ProcessFrame, cb, (uint)GodotObject.ConnectFlags.OneShot);
+        await tcs.Task;
     }
 }
