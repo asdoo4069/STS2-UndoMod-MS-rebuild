@@ -1,7 +1,9 @@
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Monsters;
+using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using UndoModMS.Snapshot;
 
@@ -18,7 +20,41 @@ internal static class SpecialCreatureVisualRefresher
             case WaterfallGiant waterfallGiant:
                 NormalizeWaterfallGiant(waterfallGiant, node);
                 break;
+
+            case TestSubject testSubject:
+                NormalizeTestSubject(testSubject, node);
+                break;
         }
+    }
+
+    // ── 실험체 ────────────────────────────────────────────────
+
+    private static void NormalizeTestSubject(TestSubject monster, NCreature creatureNode)
+    {
+        int respawns = ReadInt(monster, "_respawns");
+        int phaseIndex = Math.Clamp(respawns + 1, 1, 3);
+        creatureNode.SetDefaultScaleTo(1f + respawns * 0.1f, 0f);
+
+        bool isIntangible = monster.Creature.HasPower<IntangiblePower>();
+        var canvasGroup = creatureNode.GetSpecialNode<CanvasGroup>("%CanvasGroup");
+        if (canvasGroup != null)
+            canvasGroup.SelfModulate = isIntangible ? StsColors.halfTransparentWhite : Colors.White;
+
+        if (IsPendingRevive(monster.Creature))
+        {
+            creatureNode.SetAnimationTrigger("DeadTrigger");
+            EnsureBaseAnimation(creatureNode, $"knocked_out_loop{phaseIndex}", loop: true);
+            return;
+        }
+
+        if (monster.Creature.IsDead)
+        {
+            creatureNode.SetAnimationTrigger("Dead");
+            EnsureBaseAnimation(creatureNode, "die", loop: false);
+            return;
+        }
+
+        EnsureBaseAnimation(creatureNode, $"idle_loop{phaseIndex}", loop: true);
     }
 
     // ── 폭포거인 ────────────────────────────────────────────────
@@ -197,5 +233,12 @@ internal static class SpecialCreatureVisualRefresher
     {
         try { return AccessTools.Field(monster.GetType(), fieldName)?.GetValue(monster) is int v ? v : 0; }
         catch { return 0; }
+    }
+
+    private static bool IsPendingRevive(Creature creature)
+    {
+        return creature.Powers.Any(p =>
+            AccessTools.Property(p.GetType(), "IsReviving")?.GetValue(p) is true ||
+            AccessTools.Property(p.GetType(), "IsHalfDead")?.GetValue(p) is true);
     }
 }

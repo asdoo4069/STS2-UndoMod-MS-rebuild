@@ -33,7 +33,7 @@ public static class AnimDiePatch
 
     private static readonly string[] ReviveLikePowerNameSubstrings =
     {
-        "Revive", "Reborn", "Reincarn", "PreventDeath", "InvincibleOnDeath", "Illusion", "DieForYou",
+        "Revive", "Reborn", "Reincarn", "PreventDeath", "InvincibleOnDeath", "Illusion", "DieForYou", "Adaptable",
     };
 
     private static readonly string[] LiveReviveAnimPowerNameSubstrings =
