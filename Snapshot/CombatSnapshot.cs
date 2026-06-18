@@ -369,6 +369,8 @@ internal sealed class CombatSnapshot
 
     private static bool IsTransientName(string name, bool isDead = true)
     {
+        if (IsLoopShaped(name)) return false;
+
         foreach (var s in TransientPatterns)
         {
             if (name.IndexOf(s, StringComparison.OrdinalIgnoreCase) < 0) continue;

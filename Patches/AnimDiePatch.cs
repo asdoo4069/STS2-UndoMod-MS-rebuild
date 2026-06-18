@@ -152,9 +152,9 @@ public static class AnimDiePatch
             if (visuals == null) return true;
             var megaSprite = AccessTools.Property(visualsType, "SpineBody")?.GetValue(visuals);
             if (megaSprite == null) return true;
-            var hasAnim = AccessTools.Method(megaSprite.GetType(), "HasAnimation", new[] { typeof(string) });
+            var hasAnim = AccessTools.Method(megaSprite.GetType(), "HasAnimation", [typeof(string)]);
             if (hasAnim == null) return true;
-            return hasAnim.Invoke(megaSprite, new object[] { "die" }) is bool b ? b : true;
+            return hasAnim.Invoke(megaSprite, ["die"]) is not bool b || b;
         }
         catch { return true; }
     }
@@ -277,7 +277,7 @@ public static class AnimDiePatch
             if (visuals == null) return 0f;
             var spine = ReflectionCache.NCVSpineAnimationProp?.GetValue(visuals);
             if (spine == null) return 0f;
-            var trackEntry = ReflectionCache.SpineSetAnimationMethod?.Invoke(spine, new object[] { "die", false, 0 });
+            var trackEntry = ReflectionCache.SpineSetAnimationMethod?.Invoke(spine, ["die", false, 0]);
             if (trackEntry == null) return 0f;
             var anim = ReflectionCache.TrackGetAnimationMethod?.Invoke(trackEntry, null);
             if (anim == null) return 0f;
