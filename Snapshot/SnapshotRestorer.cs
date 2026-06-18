@@ -17,7 +17,7 @@ namespace UndoModMS.Snapshot;
 
 internal static class SnapshotRestorer
 {
-    public static async Task Restore(CombatSnapshot snap)
+    public static void Restore(CombatSnapshot snap)
     {
         var cm = CombatManager.Instance;
         if (cm == null) { UndoLogger.Warn("[Restore] CombatManager null"); return; }
@@ -67,9 +67,6 @@ internal static class SnapshotRestorer
             var ev = AccessTools.Field(typeof(CombatManager), "TurnStarted");
             if (ev?.GetValue(cm) is Delegate d) d.DynamicInvoke(cs);
         });
-
-        await WaitOneFrameAsync();
-        Try("CreatureVisualsDeferred", () => CreatureVisualRefresher.Refresh(snap));
 
         UndoLogger.Info("[Restore] complete");
     }
@@ -1394,23 +1391,5 @@ internal static class SnapshotRestorer
         if (prop?.CanWrite == true) { prop.SetValue(target, value); return; }
         var field = AccessTools.Field(target.GetType(), $"<{name}>k__BackingField");
         field?.SetValue(target, value);
-    }
-
-    private static async Task WaitOneFrameAsync()
-    {
-        if (Engine.GetMainLoop() is not SceneTree tree)
-            return;
-
-        TaskCompletionSource<bool> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        Callable cb = default;
-        cb = Callable.From(() =>
-        {
-            if (tree.IsConnected(SceneTree.SignalName.ProcessFrame, cb))
-                tree.Disconnect(SceneTree.SignalName.ProcessFrame, cb);
-            tcs.TrySetResult(true);
-        });
-
-        tree.Connect(SceneTree.SignalName.ProcessFrame, cb, (uint)GodotObject.ConnectFlags.OneShot);
-        await tcs.Task;
     }
 }

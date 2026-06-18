@@ -60,7 +60,7 @@ internal static class UndoController
         UndoSteps(Stack.Count - targetIndex);
     }
 
-    private static async void UndoSteps(int n)
+    private static void UndoSteps(int n)
     {
         UndoLogger.Warn("[Undo] Undo pressed.");
         if (n <= 0 || Stack.Count == 0) return;
@@ -72,7 +72,7 @@ internal static class UndoController
 
         Patches.DeathAnimDelayPatch.DeathAnimActive.Clear();
         IsRestoring = true;
-        try { await SnapshotRestorer.Restore(snap); }
+        try { SnapshotRestorer.Restore(snap); }
         catch (Exception ex) { UndoLogger.Warn($"[Undo] restore threw: {ex.Message}"); }
         finally { IsRestoring = false; }
     }
