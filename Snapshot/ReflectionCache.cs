@@ -242,6 +242,8 @@ internal static class ReflectionCache
         AccessTools.Field(typeof(NCreature), "_shakeTween");
     public static readonly FieldInfo? NCreatureScaleTweenField =
         AccessTools.Field(typeof(NCreature), "_scaleTween");
+    public static readonly FieldInfo? NCreatureTempScaleField =
+        AccessTools.Field(typeof(NCreature), "_tempScale");
 
     // Spine animation handles
     public static readonly Type? NCreatureVisualsType =
@@ -390,6 +392,7 @@ internal static class ReflectionCache
         Check(nameof(NOrbManagerTweenLayoutMethod), NOrbManagerTweenLayoutMethod);
         Check(nameof(NOrbManagerUpdateNavMethod), NOrbManagerUpdateNavMethod);
         Check(nameof(HurtAnimIsPlayingMethod), HurtAnimIsPlayingMethod);
+        Check(nameof(NCreatureTempScaleField), NCreatureTempScaleField);
 
         if (NCreatureVisualsType != null)
             UndoLogger.Info($"[Reflection] NCreatureVisuals resolved: {NCreatureVisualsType.FullName}");

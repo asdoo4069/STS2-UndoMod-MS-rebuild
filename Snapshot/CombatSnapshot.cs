@@ -264,6 +264,7 @@ internal sealed class CombatSnapshot
                     {
                         if (ReflectionCache.NCVHueField?.GetValue(visuals) is float h)
                             snap.Hue = h;
+                        snap.DefaultScale = visuals.DefaultScale;
                         if (ReflectionCache.NCVLiquidOverlayTimerField?.GetValue(visuals) is double t)
                             snap.LiquidOverlayTimer = t;
 
@@ -291,6 +292,9 @@ internal sealed class CombatSnapshot
                     }
                 }
                 catch { }
+
+                if (ReflectionCache.NCreatureTempScaleField?.GetValue(nc) is float ts)
+                    snap.TempScale = ts;
 
                 bool deathAnimActive = Patches.DeathAnimDelayPatch.DeathAnimActive.Contains(c);
                 if (deathAnimActive)
@@ -594,6 +598,8 @@ internal struct CreatureSnapshot
     public string? SpineAnimNameTrack3;
 
     public float? Hue;
+    public float? DefaultScale;
+    public float? TempScale;
     public double? LiquidOverlayTimer;
     public Material? BodyNormalMaterial;
     public bool LiquidOverlayWasActive;

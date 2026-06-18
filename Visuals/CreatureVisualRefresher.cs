@@ -1,3 +1,5 @@
+using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
@@ -93,6 +95,46 @@ internal static class CreatureVisualRefresher
                     if (visuals != null && saved.Hue.HasValue
                         && ReflectionCache.NCVHueField is var hf && hf != null)
                         hf.SetValue(visuals, saved.Hue.Value);
+
+                    // scale 복원 (_tempScale 적용, scaleTween 킬)
+                    if (saved.DefaultScale.HasValue)
+                    {
+                        try
+                        {
+                            if (ReflectionCache.NCreatureScaleTweenField?.GetValue(node) is Tween scaleTween
+                                && GodotObject.IsInstanceValid(scaleTween) && scaleTween.IsValid())
+                                scaleTween.Kill();
+                            ReflectionCache.NCreatureScaleTweenField?.SetValue(node, null);
+
+                            float defaultScale = saved.DefaultScale.Value;
+                            float hue = saved.Hue ?? 0f;
+                            node.SetScaleAndHue(defaultScale, hue);
+
+                            if (saved.TempScale.HasValue)
+                            {
+                                float tempScale = saved.TempScale.Value;
+                                ReflectionCache.NCreatureTempScaleField?.SetValue(node, tempScale);
+                                var ncVisuals = node.Visuals;
+                                if (ncVisuals != null)
+                                    ncVisuals.Scale = Vector2.One * tempScale * defaultScale;
+
+                                try
+                                {
+                                    var setOrbPos = AccessTools.Method(typeof(NCreature), "SetOrbManagerPosition");
+                                    setOrbPos?.Invoke(node, null);
+                                }
+                                catch { }
+                                try
+                                {
+                                    var updateBounds = AccessTools.Method(typeof(NCreature), "UpdateBounds",
+                                        [typeof(Node)]);
+                                    updateBounds?.Invoke(node, [node.Visuals]);
+                                }
+                                catch { }
+                            }
+                        }
+                        catch (Exception ex) { UndoLogger.Warn($"[CreatureVisual] scale restore failed id={saved.CombatId}: {ex.Message}"); }
+                    }
 
                     if (visuals != null && saved.LiquidOverlayTimer.HasValue
                         && ReflectionCache.NCVLiquidOverlayTimerField is var tf && tf != null)
