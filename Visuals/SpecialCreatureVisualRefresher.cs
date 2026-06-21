@@ -65,7 +65,7 @@ internal static class SpecialCreatureVisualRefresher
         ReconcileWaterfallGiantVfx(monster, creatureNode);
 
         bool aboutToBlow = ReadBool(monster, "_isAboutToBlow")
-            || monster.Creature.ShowsInfiniteHp
+            || monster.Creature.HpDisplay.IsInfinite()
             || string.Equals(monster.NextMove?.Id, "ABOUT_TO_BLOW_MOVE", StringComparison.Ordinal);
 
         if (aboutToBlow)
@@ -112,7 +112,7 @@ internal static class SpecialCreatureVisualRefresher
         if (vfxNode == null) return;
 
         bool aboutToBlow = ReadBool(monster, "_isAboutToBlow")
-            || monster.Creature.ShowsInfiniteHp
+            || monster.Creature.HpDisplay.IsInfinite()
             || string.Equals(monster.NextMove?.Id, "ABOUT_TO_BLOW_MOVE", StringComparison.Ordinal);
 
         int idx = ReadInt(monster, "_pressureBuildupIdx");

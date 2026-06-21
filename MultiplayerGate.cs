@@ -13,7 +13,7 @@ internal static class MultiplayerGate
         {
             var rm = RunManager.Instance;
             if (rm == null || !rm.IsInProgress) return false;
-            if (rm.IsSinglePlayerOrFakeMultiplayer) return false;
+            if (rm.IsSingleplayerOrFakeMultiplayer) return false;
 
             if (!_loggedDormantThisCombat)
             {

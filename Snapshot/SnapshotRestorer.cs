@@ -293,7 +293,7 @@ internal static class SnapshotRestorer
             ReflectionCache.CreatureBlockField.SetValue(creature, saved.Block);
 
             ResetIsDeadIfPresent(creature, saved.IsDead);
-            creature.ShowsInfiniteHp = saved.ShowsInfiniteHp;
+            creature.HpDisplay = saved.HpDisplay;
 
             FireDelegateField(creature, ReflectionCache.CreatureCurrentHpChangedField, oldHpRev, saved.CurrentHp);
             FireDelegateField(creature, ReflectionCache.CreatureMaxHpChangedField, oldMaxHpRev, saved.MaxHp);
@@ -966,7 +966,7 @@ internal static class SnapshotRestorer
             ReflectionCache.CreatureBlockField.SetValue(live, saved.Block);
 
             ResetIsDeadIfPresent(live, saved.IsDead);
-            live.ShowsInfiniteHp = saved.ShowsInfiniteHp;
+            live.HpDisplay = saved.HpDisplay;
 
             FireDelegateField(live, ReflectionCache.CreatureCurrentHpChangedField, oldHp, saved.CurrentHp);
             FireDelegateField(live, ReflectionCache.CreatureMaxHpChangedField, oldMaxHp, saved.MaxHp);

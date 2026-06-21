@@ -195,7 +195,7 @@ internal sealed class CombatSnapshot
             MaxHp = (int)(ReflectionCache.CreatureMaxHpField.GetValue(c) ?? 0),
             Block = (int)(ReflectionCache.CreatureBlockField.GetValue(c) ?? 0),
             IsDead = c.IsDead,
-            ShowsInfiniteHp = c.ShowsInfiniteHp,
+            HpDisplay = c.HpDisplay,
         };
 
         foreach (var pm in c.Powers)
@@ -582,7 +582,7 @@ internal struct CreatureSnapshot
     public int MaxHp;
     public int Block;
     public bool IsDead;
-    public bool ShowsInfiniteHp;
+    public HpDisplay HpDisplay;
     public List<PowerSnapshot> Powers;
 
     public bool HadVisualNode;
