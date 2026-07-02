@@ -7,6 +7,9 @@ This project contains code and ideas derived from the original **sts2-undo-mod**
 Original project:
 https://github.com/ing-gom/sts2-undo-mod
 
+Reference project:
+https://github.com/kefangc/sts2-UndoTheSpire2
+
 Portions of the implementation were adapted, modified, or restructured from the original codebase to fit the architecture and goals of this project.
 
 The original project is licensed under the MIT License. In accordance with that license, the original copyright notice and license text are included in this repository.
