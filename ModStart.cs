@@ -19,6 +19,7 @@ public partial class ModStart : Node
 		{
 			harmony.PatchAll(typeof(ModStart).Assembly);
 			Patches.SnapshotPatches.InstallAll(harmony);
+			Patches.IconMaterialIsolationPatch.InstallAll(harmony);
 			UndoLogger.Info("initialized.");
 		}
 		catch (Exception ex)
