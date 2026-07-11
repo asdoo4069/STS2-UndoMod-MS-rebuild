@@ -28,12 +28,16 @@ public static class PatchNGameInput
         }
 
         if (inputEvent is not InputEventKey { Pressed: true, Echo: false } key) return;
-        if (key.Keycode != Key.Z) return;
 
-        if (key.ShiftPressed)
-            UndoController.UndoTurn();
-        else
-            UndoController.Undo();
+        if (key.Keycode == Key.F)
+        {
+            Diagnostics.IconStateLogger.Dump();
+            return;
+        }
+
+        if (key.Keycode != Key.Z) return;
+        if (key.ShiftPressed) UndoController.UndoTurn();
+        else UndoController.Undo();
     }
 
     // RMB 이벤트가 카드 GUI input에 소비되는 경우를 대비해 정적 폴링도 함께 확인
