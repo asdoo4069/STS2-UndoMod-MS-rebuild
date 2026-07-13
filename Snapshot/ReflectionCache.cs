@@ -343,6 +343,12 @@ internal static class ReflectionCache
     public static readonly FieldInfo? NCombatCardPileCountLabelField =
         NCombatCardPileType != null ? AccessTools.Field(NCombatCardPileType, "_countLabel") : null;
 
+    // 방패 위치 버그 수정용 — NCreature → NCreatureStateDisplay → NHealthBar 체인
+    public static readonly FieldInfo? NHealthBarOriginalBlockPositionField =
+        AccessTools.Field(typeof(NHealthBar), "_originalBlockPosition");
+    public static readonly FieldInfo? NHealthBarBlockTweenField =
+        AccessTools.Field(typeof(NHealthBar), "_blockTween");
+
     static ReflectionCache()
     {
         LogStartupDiagnostics();
@@ -393,6 +399,8 @@ internal static class ReflectionCache
         Check(nameof(NOrbManagerUpdateNavMethod), NOrbManagerUpdateNavMethod);
         Check(nameof(HurtAnimIsPlayingMethod), HurtAnimIsPlayingMethod);
         Check(nameof(NCreatureTempScaleField), NCreatureTempScaleField);
+        Check(nameof(NHealthBarOriginalBlockPositionField), NHealthBarOriginalBlockPositionField);
+        Check(nameof(NHealthBarBlockTweenField), NHealthBarBlockTweenField);
 
         if (NCreatureVisualsType != null)
             UndoLogger.Info($"[Reflection] NCreatureVisuals resolved: {NCreatureVisualsType.FullName}");
