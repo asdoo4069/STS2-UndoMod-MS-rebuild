@@ -73,7 +73,7 @@ internal static class CreatureVisualRefresher
                         body.Position = saved.VisualBodyPosition;
                         body.Rotation = saved.VisualBodyRotation;
                         if (wasAliveInSnap) body.Visible = true;
-                        if (body is Godot.CanvasItem bodyCi)
+                        if (body is CanvasItem bodyCi)
                             bodyCi.Modulate = saved.VisualBodyModulate;
                     }
                 }
@@ -83,7 +83,7 @@ internal static class CreatureVisualRefresher
                 {
                     try
                     {
-                        if (node.Visuals is Godot.Node2D visualsN2D)
+                        if (node.Visuals is Node2D visualsN2D)
                             visualsN2D.Visible = true;
                     }
                     catch { }
@@ -146,7 +146,7 @@ internal static class CreatureVisualRefresher
                         {
                             ReflectionCache.NCVLiquidOverlayTimerField?.SetValue(visuals, 0.0);
 
-                            var spineBodyProp = HarmonyLib.AccessTools.Property(visuals.GetType(), "SpineBody");
+                            var spineBodyProp = AccessTools.Property(visuals.GetType(), "SpineBody");
                             var spineBody = spineBodyProp?.GetValue(visuals);
                             if (spineBody != null && saved.BodyNormalMaterial != null
                                 && ReflectionCache.MegaSpriteSetNormalMaterialMethod != null)
@@ -204,7 +204,7 @@ internal static class CreatureVisualRefresher
                         mod.A = 1f;
                         sd.Modulate = mod;
                         if (ReflectionCache.NCreatureStateDisplayOriginalPositionField?.GetValue(sd)
-                            is Godot.Vector2 origPos)
+                            is Vector2 origPos)
                             sd.Position = origPos;
                     }
                     else if (!isLiveReviveAnim)
@@ -229,7 +229,7 @@ internal static class CreatureVisualRefresher
             bool resetSomething = false;
             foreach (var fieldName in new[] { "<IsFocused>k__BackingField", "_isFocused", "isFocused" })
             {
-                var f = HarmonyLib.AccessTools.Field(typeof(NCreature), fieldName);
+                var f = AccessTools.Field(typeof(NCreature), fieldName);
                 if (f != null) { f.SetValue(node, false); resetSomething = true; }
             }
             if (!resetSomething)
@@ -244,11 +244,11 @@ internal static class CreatureVisualRefresher
                         var prevMf = node.Hitbox.MouseFilter;
                         var prevFm = node.Hitbox.FocusMode;
                         var prevVis = node.Hitbox.Visible;
-                        node.Hitbox.MouseFilter = Godot.Control.MouseFilterEnum.Stop;
-                        node.Hitbox.FocusMode = Godot.Control.FocusModeEnum.All;
+                        node.Hitbox.MouseFilter = Control.MouseFilterEnum.Stop;
+                        node.Hitbox.FocusMode = Control.FocusModeEnum.All;
                         node.Hitbox.Visible = true;
-                        if (prevMf != Godot.Control.MouseFilterEnum.Stop
-                            || prevFm != Godot.Control.FocusModeEnum.All
+                        if (prevMf != Control.MouseFilterEnum.Stop
+                            || prevFm != Control.FocusModeEnum.All
                             || !prevVis)
                         {
                             UndoLogger.Warn($"[Targeting] hitbox restore id={combatId} mf {prevMf}->Stop fm {prevFm}->All vis {prevVis}->True");
@@ -314,7 +314,7 @@ internal static class CreatureVisualRefresher
                     var anim = ReflectionCache.TrackGetAnimationMethod?.Invoke(track, null);
                     if (anim != null)
                     {
-                        var getName = HarmonyLib.AccessTools.Method(anim.GetType(), "GetName");
+                        var getName = AccessTools.Method(anim.GetType(), "GetName");
                         if (getName?.Invoke(anim, null) is string s) currentName = s;
                     }
                 }
@@ -334,14 +334,14 @@ internal static class CreatureVisualRefresher
 
             try
             {
-                var spineBodyProp = HarmonyLib.AccessTools.Property(visualsType, "SpineBody");
+                var spineBodyProp = AccessTools.Property(visualsType, "SpineBody");
                 var megaSprite = spineBodyProp?.GetValue(visuals);
                 var skel = ReflectionCache.MegaSpriteGetSkeletonMethod?.Invoke(megaSprite, null);
                 if (skel != null)
                 {
                     ReflectionCache.SkeletonSetSlotsToSetupPoseMethod?.Invoke(skel, null);
-                    HarmonyLib.AccessTools.Method(skel.GetType(), "SetBonesToSetupPose")?.Invoke(skel, null);
-                    HarmonyLib.AccessTools.Method(skel.GetType(), "SetToSetupPose")?.Invoke(skel, null);
+                    AccessTools.Method(skel.GetType(), "SetBonesToSetupPose")?.Invoke(skel, null);
+                    AccessTools.Method(skel.GetType(), "SetToSetupPose")?.Invoke(skel, null);
                 }
             }
             catch (Exception ex) { UndoLogger.Warn($"[CreatureVisual] setup-pose reset failed: {ex.Message}"); }
@@ -349,16 +349,16 @@ internal static class CreatureVisualRefresher
             var entry = setAnim.Invoke(spine, [target, true, 0]);
             if (entry != null)
             {
-                try { HarmonyLib.AccessTools.Method(entry.GetType(), "SetMixDuration")?.Invoke(entry, [0f]); } catch { }
-                try { HarmonyLib.AccessTools.Method(entry.GetType(), "SetTimeScale")?.Invoke(entry, [1f]); } catch { }
+                try { AccessTools.Method(entry.GetType(), "SetMixDuration")?.Invoke(entry, [0f]); } catch { }
+                try { AccessTools.Method(entry.GetType(), "SetTimeScale")?.Invoke(entry, [1f]); } catch { }
             }
 
-            try { HarmonyLib.AccessTools.Method(spine.GetType(), "SetTimeScale")?.Invoke(spine, [1f]); } catch { }
+            try { AccessTools.Method(spine.GetType(), "SetTimeScale")?.Invoke(spine, [1f]); } catch { }
             try
             {
-                var megaSprite = HarmonyLib.AccessTools.Property(visualsType, "SpineBody")?.GetValue(visuals);
+                var megaSprite = AccessTools.Property(visualsType, "SpineBody")?.GetValue(visuals);
                 if (megaSprite != null)
-                    HarmonyLib.AccessTools.Method(megaSprite.GetType(), "SetTimeScale")?.Invoke(megaSprite, [1f]);
+                    AccessTools.Method(megaSprite.GetType(), "SetTimeScale")?.Invoke(megaSprite, [1f]);
             }
             catch { }
 
@@ -379,7 +379,7 @@ internal static class CreatureVisualRefresher
                         if (t == null) continue;
                         var a = ReflectionCache.TrackGetAnimationMethod?.Invoke(t, null);
                         if (a == null) continue;
-                        var n = HarmonyLib.AccessTools.Method(a.GetType(), "GetName")?.Invoke(a, null) as string;
+                        var n = AccessTools.Method(a.GetType(), "GetName")?.Invoke(a, null) as string;
                         if (string.IsNullOrEmpty(n) || string.Equals(n, target, StringComparison.Ordinal)) continue;
                         setAnim.Invoke(spine, [target, true, ti]);
                     }
@@ -402,7 +402,7 @@ internal static class CreatureVisualRefresher
     {
         foreach (var n in SnapshotRestorer.WalkNodeTree(node))
         {
-            if (n is Godot.AnimationPlayer ap)
+            if (n is AnimationPlayer ap)
             {
                 try { if (ap.IsPlaying()) ap.Stop(keepState: false); } catch { }
             }
@@ -413,10 +413,10 @@ internal static class CreatureVisualRefresher
             var body = node.Body;
             if (body != null)
             {
-                body.Position = Godot.Vector2.Zero;
+                body.Position = Vector2.Zero;
                 body.RotationDegrees = 0f;
-                body.Modulate = Godot.Colors.White;
-                body.SelfModulate = Godot.Colors.White;
+                body.Modulate = Colors.White;
+                body.SelfModulate = Colors.White;
             }
         }
         catch (Exception ex) { UndoLogger.Warn($"[CreatureVisual] body reset failed: {ex.Message}"); }
@@ -427,8 +427,8 @@ internal static class CreatureVisualRefresher
         if (field == null) return;
         try
         {
-            if (field.GetValue(sd) is Godot.Tween tw
-                && Godot.GodotObject.IsInstanceValid(tw)
+            if (field.GetValue(sd) is Tween tw
+                && GodotObject.IsInstanceValid(tw)
                 && tw.IsValid())
                 tw.Kill();
         }
