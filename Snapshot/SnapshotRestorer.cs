@@ -320,11 +320,8 @@ internal static class SnapshotRestorer
 
             if (creature.Monster != null)
             {
-                if (saved.MonsterRng.HasValue)
-                {
-                    var (seed, counter) = saved.MonsterRng.Value;
-                    ReflectionCache.MonsterRngField?.SetValue(creature.Monster, new Rng(seed, counter));
-                }
+                if (saved.MonsterRng != null)
+                    ReflectionCache.MonsterRngField?.SetValue(creature.Monster, new Rng(saved.MonsterRng));
                 if (saved.MonsterMove.HasValue)
                     RestoreMonsterMove(creature.Monster, saved.MonsterMove.Value);
                 if (saved.MonsterFields != null)
@@ -974,11 +971,8 @@ internal static class SnapshotRestorer
 
             RestoreCreaturePowers(live, saved);
 
-            if (live.Monster != null && saved.MonsterRng.HasValue)
-            {
-                var (seed, counter) = saved.MonsterRng.Value;
-                ReflectionCache.MonsterRngField?.SetValue(live.Monster, new Rng(seed, counter));
-            }
+            if (live.Monster != null && saved.MonsterRng != null)
+                ReflectionCache.MonsterRngField?.SetValue(live.Monster, new Rng(saved.MonsterRng));
             if (live.Monster != null && saved.MonsterMove.HasValue)
                 RestoreMonsterMove(live.Monster, saved.MonsterMove.Value);
             if (live.Monster != null && saved.MonsterFields != null)
@@ -1371,8 +1365,8 @@ internal static class SnapshotRestorer
         var rngSet = runState.Rng;
         if (rngSet == null) return;
         if (ReflectionCache.RunRngDictField.GetValue(rngSet) is not Dictionary<RunRngType, Rng> dict) return;
-        foreach (var (key, (seed, counter)) in snap.RunRngs)
-            dict[key] = new Rng(seed, counter);
+        foreach (var (key, serializable) in snap.RunRngs)
+            dict[key] = new Rng(serializable);
     }
 
     private static void RestoreHistory(CombatSnapshot snap, CombatManager cm)

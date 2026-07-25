@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.Saves;
 using System.Reflection;
 
 namespace UndoModMS.Snapshot;
@@ -49,7 +50,7 @@ internal sealed class CombatSnapshot
     public List<OrbModel> OrbRefs = new();
     public Dictionary<OrbModel, OrbModel> OrbClones = new(ReferenceEqualityComparer.Instance);
 
-    public Dictionary<RunRngType, (uint seed, int counter)> RunRngs = new();
+    public Dictionary<RunRngType, SerializableRng> RunRngs = new();
 
     public List<object>? HistoryEntries;
 
@@ -220,7 +221,7 @@ internal sealed class CombatSnapshot
         if (c.Monster is { } monster)
         {
             if (ReflectionCache.MonsterRngField?.GetValue(monster) is Rng rng)
-                snap.MonsterRng = (rng.Seed, rng.Counter);
+                snap.MonsterRng = rng.ToSerializable();
             snap.MonsterMove = CaptureMonsterMove(monster);
             snap.MonsterFields = CaptureMonsterFields(monster);
         }
@@ -547,7 +548,7 @@ internal sealed class CombatSnapshot
             is not Dictionary<RunRngType, Rng> dict) return;
 
         foreach (var kv in dict)
-            snap.RunRngs[kv.Key] = (kv.Value.Seed, kv.Value.Counter);
+            snap.RunRngs[kv.Key] = kv.Value.ToSerializable();
     }
 
     private static void CaptureHistory(CombatSnapshot snap, CombatManager cm)
@@ -607,7 +608,7 @@ internal struct CreatureSnapshot
     public Node? BodyRef;
     public Node? BodyParentRef;
 
-    public (uint seed, int counter)? MonsterRng;
+    public SerializableRng? MonsterRng;
     public MonsterMoveSnapshot? MonsterMove;
     public Dictionary<string, object?>? MonsterFields;
 
