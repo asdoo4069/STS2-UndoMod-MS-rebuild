@@ -72,7 +72,7 @@ internal static class DeepCloner
             list.AddRange(t.GetFields(BindingFlags.Public | BindingFlags.NonPublic
                                       | BindingFlags.Instance | BindingFlags.DeclaredOnly));
         }
-        return list.ToArray();
+        return [.. list];
     }
 
     private static bool IsImmutable(Type t)

@@ -168,7 +168,7 @@ internal static class CreatureVisualRefresher
                     && CombatSnapshot.IdleAnimCache.TryGetValue(live, out var cached))
                     desired = cached;
                 if (!string.IsNullOrEmpty(desired))
-                    TryRestoreSpineAnim(node, desired!);
+                    TryRestoreSpineAnim(node, desired);
 
                 // 특수 개체 복원
                 if (live != null) SpecialCreatureVisualRefresher.Refresh(live, node);

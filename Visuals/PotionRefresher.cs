@@ -51,7 +51,7 @@ internal static class PotionRefresher
                     if (_potionType.IsInstanceOfType(child))
                     {
                         holder.RemoveChild(child);
-                        ((Node)child).QueueFree();
+                        child.QueueFree();
                     }
                 }
                 _holderPotionBackingField?.SetValue(holder, null);

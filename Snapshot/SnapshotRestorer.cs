@@ -185,8 +185,7 @@ internal static class SnapshotRestorer
         foreach (var pile in pcs.AllPiles)
         {
             if (!snap.PileRefs.TryGetValue(pile.Type, out var savedCards)) continue;
-            var liveCards = ReflectionCache.CardPileCardsField.GetValue(pile) as System.Collections.IList;
-            if (liveCards == null) continue;
+            if (ReflectionCache.CardPileCardsField.GetValue(pile) is not System.Collections.IList liveCards) continue;
             liveCards.Clear();
             foreach (var c in savedCards) liveCards.Add(c);
             var contentsChanged = AccessTools.Field(typeof(CardPile), "ContentsChanged");
@@ -408,7 +407,7 @@ internal static class SnapshotRestorer
                             try
                             {
                                 var setUpSkin = AccessTools.Method(
-                                    ReflectionCache.NCreatureVisualsType!, "SetUpSkin",
+                                    ReflectionCache.NCreatureVisualsType, "SetUpSkin",
                                     [typeof(MonsterModel)]);
                                 setUpSkin?.Invoke(n, [creature.Monster]);
                             }
@@ -489,7 +488,7 @@ internal static class SnapshotRestorer
                 try
                 {
                     var oldParent = liveBody!.GetParent();
-                    if (oldParent != null) oldParent.RemoveChild(liveBody);
+                    oldParent?.RemoveChild(liveBody);
                     if (visuals is Node visualsNode2)
                     {
                         visualsNode2.AddChild(liveBody);
@@ -516,7 +515,7 @@ internal static class SnapshotRestorer
             try
             {
                 var curParent = saved.BodyRef.GetParent();
-                if (curParent != null) curParent.RemoveChild(saved.BodyRef);
+                curParent?.RemoveChild(saved.BodyRef);
             }
             catch (Exception ex) { UndoLogger.Warn($"[BodyRestore] detach old parent failed: {ex.Message}"); }
 
@@ -1027,7 +1026,7 @@ internal static class SnapshotRestorer
         {
             stateLog.Clear();
             foreach (var id in saved.StateLogIds)
-                if (states.Contains(id)) stateLog.Add(states[id]!);
+                if (states.Contains(id)) stateLog.Add(states[id]);
         }
 
         if (ReflectionCache.MoveStatePerformedField != null && saved.MovePerformedAtLeastOnce != null)

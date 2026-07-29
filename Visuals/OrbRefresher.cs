@@ -20,8 +20,7 @@ internal static class OrbRefresher
         var room = NCombatRoom.Instance;
         var cm = CombatManager.Instance;
         if (room == null || cm == null) return;
-        var cs = ReflectionCache.CombatManagerStateField.GetValue(cm) as CombatState;
-        if (cs == null) return;
+        if (ReflectionCache.CombatManagerStateField.GetValue(cm) is not CombatState cs) return;
 
         foreach (var ally in cs.Allies)
         {
@@ -44,12 +43,8 @@ internal static class OrbRefresher
 
     private static void RebuildOrbManager(NOrbManager orbManager, MegaCrit.Sts2.Core.Entities.Orbs.OrbQueue orbQueue)
     {
-        var tween = ReflectionCache.NOrbManagerTweenField?.GetValue(orbManager) as Tween;
-        if (tween != null && tween.IsValid()) tween.Kill();
-
-        var nOrbsList = ReflectionCache.NOrbManagerOrbsField!.GetValue(orbManager) as System.Collections.IList;
-        var container = ReflectionCache.NOrbManagerContainerField!.GetValue(orbManager) as Control;
-        if (nOrbsList == null || container == null) return;
+        if (ReflectionCache.NOrbManagerTweenField?.GetValue(orbManager) is Tween tween && tween.IsValid()) tween.Kill();
+        if (ReflectionCache.NOrbManagerOrbsField!.GetValue(orbManager) is not System.Collections.IList nOrbsList || ReflectionCache.NOrbManagerContainerField!.GetValue(orbManager) is not Control container) return;
 
         foreach (var n in nOrbsList)
             if (n is Node node) try { node.QueueFree(); } catch { }

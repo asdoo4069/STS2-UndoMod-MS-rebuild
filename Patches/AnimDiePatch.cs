@@ -13,33 +13,33 @@ public static class AnimDiePatch
     public const float SpineDieCapSeconds = 0.5f;
 
     // entity → NCreature 맵핑: 씬트리에서 분리된 좀비를 revive 시 찾기 위해 사용
-    public static readonly Dictionary<Creature, NCreature> DetachedZombies = new();
+    public static readonly Dictionary<Creature, NCreature> DetachedZombies = [];
     // 진행 중인 fade-out 트윈: undo revive 시 kill 후 modulate 리셋
-    public static readonly Dictionary<NCreature, Tween> ActiveFadeTweens = new();
+    public static readonly Dictionary<NCreature, Tween> ActiveFadeTweens = [];
     // 진행 중인 death anim 수: undo는 0이 될 때까지 대기
     public static int InFlightCount;
 
-    public static readonly HashSet<string> SkipReplacementMonsterTypes = new()
-    {
+    public static readonly HashSet<string> SkipReplacementMonsterTypes =
+    [
         "TestSubject", // 실험체
         "TheObscura", // 영사자
         "WaterfallGiant", // 폭포 거인
-    };
+    ];
 
-    public static readonly HashSet<string> SpineDieCappedMonsterTypes = new()
-    {
+    public static readonly HashSet<string> SpineDieCappedMonsterTypes =
+    [
         "Toadpole",
-    };
+    ];
 
     private static readonly string[] ReviveLikePowerNameSubstrings =
-    {
+    [
         "Revive", "Reborn", "Reincarn", "PreventDeath", "InvincibleOnDeath", "Illusion", "DieForYou", "Adaptable",
-    };
+    ];
 
     private static readonly string[] LiveReviveAnimPowerNameSubstrings =
-    {
+    [
         "Revive", "Reborn", "Reincarn", "PreventDeath", "InvincibleOnDeath", "Illusion",
-    };
+    ];
 
     public static int PruneStaleDetached()
     {
@@ -135,7 +135,7 @@ public static class AnimDiePatch
                 if (pm == null) continue;
                 var name = pm.GetType().Name;
                 foreach (var sub in substrings)
-                    if (name.IndexOf(sub, StringComparison.Ordinal) >= 0) return name;
+                    if (name.Contains(sub)) return name;
             }
             return null;
         }
@@ -173,12 +173,8 @@ public static class AnimDiePatch
 
         float spineWait = dieDuration > 0f ? dieDuration : DieVisibleFallbackSeconds;
         var monsterTypeNameForCap = GetMonsterTypeName(creature);
-        if (monsterTypeNameForCap != null
-            && SpineDieCappedMonsterTypes.Contains(monsterTypeNameForCap)
-            && spineWait > SpineDieCapSeconds)
-        {
+        if (monsterTypeNameForCap != null && SpineDieCappedMonsterTypes.Contains(monsterTypeNameForCap) && spineWait > SpineDieCapSeconds)
             spineWait = SpineDieCapSeconds;
-        }
 
         try
         {
@@ -215,7 +211,7 @@ public static class AnimDiePatch
             catch (Exception ex) { UndoLogger.Warn($"[AnimDie] register detached failed: {ex.Message}"); }
 
             var parent = creature.GetParent();
-            if (parent != null) parent.RemoveChild(creature);
+            parent?.RemoveChild(creature);
         }
         catch (Exception ex) { UndoLogger.Warn($"[AnimDie] detach NCreature failed: {ex.Message}"); }
     }
@@ -238,11 +234,11 @@ public static class AnimDiePatch
             if (vfxType == null) return;
 
             var createMethod = AccessTools.Method(vfxType, "Create",
-                new[] { typeof(NCreature), typeof(CancellationToken) });
+                [typeof(NCreature), typeof(CancellationToken)]);
             if (createMethod == null) return;
 
             var token = new CancellationTokenSource().Token;
-            var vfx = createMethod.Invoke(null, new object[] { creature, token });
+            var vfx = createMethod.Invoke(null, [creature, token]);
             if (vfx is not Node vfxNode) return;
 
             var parent = creature.GetParent();
@@ -251,7 +247,7 @@ public static class AnimDiePatch
             var addSafely = AccessTools.Method(parent.GetType(), "AddChildSafely");
             try
             {
-                if (addSafely != null) addSafely.Invoke(null, new object[] { parent, vfxNode });
+                if (addSafely != null) addSafely.Invoke(null, [parent, vfxNode]);
                 else parent.AddChild(vfxNode);
             }
             catch

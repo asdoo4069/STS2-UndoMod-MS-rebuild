@@ -31,26 +31,26 @@ internal sealed class CombatSnapshot
     public int Stars;
     public int Gold;
 
-    public Dictionary<PileType, List<CardModel>> PileRefs = new();
+    public Dictionary<PileType, List<CardModel>> PileRefs = [];
     public Dictionary<CardModel, CardModel> CardMutableClones = new(ReferenceEqualityComparer.Instance);
-    public List<CardModel> AllCardRefs = new();
+    public List<CardModel> AllCardRefs = [];
 
     public uint NextCreatureId;
-    public List<CreatureSnapshot> Creatures = new();
-    public List<uint> PetCombatIds = new();
-    public List<Creature> EscapedCreatures = new();
+    public List<CreatureSnapshot> Creatures = [];
+    public List<uint> PetCombatIds = [];
+    public List<Creature> EscapedCreatures = [];
 
-    public List<RelicSnapshot> Relics = new();
+    public List<RelicSnapshot> Relics = [];
 
-    public List<PotionModel?> PotionSlotRefs = new();
+    public List<PotionModel?> PotionSlotRefs = [];
     public Dictionary<PotionModel, PotionModel> PotionClones = new(ReferenceEqualityComparer.Instance);
 
     public bool HasOrbData;
     public int OrbCapacity;
-    public List<OrbModel> OrbRefs = new();
+    public List<OrbModel> OrbRefs = [];
     public Dictionary<OrbModel, OrbModel> OrbClones = new(ReferenceEqualityComparer.Instance);
 
-    public Dictionary<RunRngType, SerializableRng> RunRngs = new();
+    public Dictionary<RunRngType, SerializableRng> RunRngs = [];
 
     public List<object>? HistoryEntries;
 
@@ -61,11 +61,9 @@ internal sealed class CombatSnapshot
     {
         var cm = CombatManager.Instance;
         if (cm == null) return null;
-        var cs = ReflectionCache.CombatManagerStateField.GetValue(cm) as CombatState;
-        if (cs == null) return null;
+        if (ReflectionCache.CombatManagerStateField.GetValue(cm) is not CombatState cs) return null;
 
-        var runState = ReflectionCache.RunManagerStateProperty?.GetValue(RunManager.Instance) as RunState;
-        if (runState == null) return null;
+        if (ReflectionCache.RunManagerStateProperty?.GetValue(RunManager.Instance) is not RunState runState) return null;
 
         var snap = new CombatSnapshot { IsTurnBoundary = isTurnBoundary };
 
@@ -113,7 +111,7 @@ internal sealed class CombatSnapshot
                 snap.Stars = (int)(ReflectionCache.PcsStarsField.GetValue(pcs) ?? 0);
 
                 foreach (var pile in pcs.AllPiles)
-                    snap.PileRefs[pile.Type] = pile.Cards.ToList();
+                    snap.PileRefs[pile.Type] = [.. pile.Cards];
 
                 foreach (var card in pcs.AllCards)
                 {
@@ -277,15 +275,13 @@ internal sealed class CombatSnapshot
                                 ? ReflectionCache.MegaSpriteGetNormalMaterialMethod?.Invoke(spineBody, null) as Material
                                 : null;
                             var saved = ReflectionCache.NCVSavedNormalMaterialField?.GetValue(visuals) as Material;
-                            var overlay = ReflectionCache.NCVCurrentLiquidOverlayMaterialField?.GetValue(visuals) as Material;
-                            snap.LiquidOverlayWasActive = overlay != null;
+                            snap.LiquidOverlayWasActive = ReflectionCache.NCVCurrentLiquidOverlayMaterialField?.GetValue(visuals) is Material overlay;
                             snap.BodyNormalMaterial = snap.LiquidOverlayWasActive ? saved : current;
                         }
                         catch (Exception ex) { UndoLogger.Warn($"[Snapshot] body material capture: {ex.Message}"); }
 
                         var bodyField = AccessTools.Field(visuals.GetType(), "_body");
-                        var body = bodyField?.GetValue(visuals) as Node;
-                        if (body != null)
+                        if (bodyField?.GetValue(visuals) is Node body)
                         {
                             snap.BodyRef = body;
                             try { snap.BodyParentRef = body.GetParent(); } catch { }
@@ -309,9 +305,9 @@ internal sealed class CombatSnapshot
                     {
                         snap.SpineAnimNameTrack0 = observed;
                         if (IsTrueIdleLoop(observed))
-                            IdleAnimCache[c!] = observed;
+                            IdleAnimCache[c] = observed;
                     }
-                    else if (observed == null && IdleAnimCache.TryGetValue(c!, out var stable))
+                    else if (observed == null && IdleAnimCache.TryGetValue(c, out var stable))
                     {
                         snap.SpineAnimNameTrack0 = stable;
                     }
@@ -334,8 +330,8 @@ internal sealed class CombatSnapshot
     private static bool IsLoopShaped(string name)
     {
         var lower = name.ToLowerInvariant();
-        return lower.IndexOf("loop", StringComparison.Ordinal) >= 0
-            || lower.IndexOf("idle", StringComparison.Ordinal) >= 0;
+        return lower.Contains("loop")
+            || lower.Contains("idle");
     }
 
     private static bool IsTrueIdleLoop(string name)
@@ -352,8 +348,7 @@ internal sealed class CombatSnapshot
         {
             var cm = CombatManager.Instance;
             if (cm == null) return false;
-            var cs = ReflectionCache.CombatManagerStateField.GetValue(cm) as CombatState;
-            if (cs == null) return false;
+            if (ReflectionCache.CombatManagerStateField.GetValue(cm) is not CombatState cs) return false;
 
             foreach (var c in cs.Creatures)
             {
@@ -370,7 +365,7 @@ internal sealed class CombatSnapshot
     }
 
     private static readonly string[] TransientPatterns =
-        { "attack", "cast", "hurt", "hit", "damage", "die", "death", "spawn" };
+        ["attack", "cast", "hurt", "hit", "damage", "die", "death", "spawn"];
 
     private static bool IsTransientName(string name, bool isDead = true)
     {
@@ -391,8 +386,7 @@ internal sealed class CombatSnapshot
         {
             var cm = CombatManager.Instance;
             if (cm == null) return;
-            var cs = ReflectionCache.CombatManagerStateField.GetValue(cm) as CombatState;
-            if (cs == null) return;
+            if (ReflectionCache.CombatManagerStateField.GetValue(cm) is not CombatState cs) return;
 
             foreach (var c in cs.Creatures)
             {
@@ -426,7 +420,7 @@ internal sealed class CombatSnapshot
             var spine = ReflectionCache.NCVSpineAnimationProp?.GetValue(visuals);
             if (spine == null) return null;
 
-            var track = ReflectionCache.SpineGetCurrentTrackMethod?.Invoke(spine, new object[] { trackIndex });
+            var track = ReflectionCache.SpineGetCurrentTrackMethod?.Invoke(spine, [trackIndex]);
             if (track == null) return null;
 
             var anim = ReflectionCache.TrackGetAnimationMethod?.Invoke(track, null);
@@ -483,7 +477,7 @@ internal sealed class CombatSnapshot
                 list.Add(((t.FullName ?? t.Name) + "::" + f.Name, f));
             }
         }
-        return list.ToArray();
+        return [.. list];
     }
 
     private static MonsterMoveSnapshot? CaptureMonsterMove(MonsterModel monster)
@@ -615,7 +609,7 @@ internal struct CreatureSnapshot
     public CreatureSnapshot()
     {
         Ref = null!;
-        Powers = new();
+        Powers = [];
     }
 }
 

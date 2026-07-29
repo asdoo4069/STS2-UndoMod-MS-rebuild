@@ -9,7 +9,7 @@ public static class DeathAnimDelayPatch
 {
     public const float DeferSeconds = 0.2f;
 
-    private static readonly Dictionary<ulong, (Godot.Timer timer, NCreature creature, bool arg)> _pending = new();
+    private static readonly Dictionary<ulong, (Godot.Timer timer, NCreature creature, bool arg)> _pending = [];
     private static bool _bypass;
     public static readonly HashSet<Creature> DeathAnimActive = new(ReferenceEqualityComparer.Instance);
 
@@ -153,7 +153,7 @@ public static class DeathAnimDelayPatch
     }
 
     private static readonly string[] _reviveLikeSubstrings =
-        { "Revive", "Reborn", "Reincarn", "PreventDeath", "InvincibleOnDeath", "Illusion", "DieForYou" };
+        ["Revive", "Reborn", "Reincarn", "PreventDeath", "InvincibleOnDeath", "Illusion", "DieForYou"];
 
     private static string? HasReviveLikePower(NCreature creature)
     {
@@ -167,7 +167,7 @@ public static class DeathAnimDelayPatch
                 var name = pm.GetType().Name;
                 foreach (var sub in _reviveLikeSubstrings)
                 {
-                    if (name.IndexOf(sub, StringComparison.Ordinal) >= 0) return name;
+                    if (name.Contains(sub)) return name;
                 }
             }
             return null;

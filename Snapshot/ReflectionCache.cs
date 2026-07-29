@@ -204,7 +204,7 @@ internal static class ReflectionCache
                 list.Add(f);
             }
         }
-        return list.ToArray();
+        return [.. list];
     }
 
     // OrbQueue
@@ -329,7 +329,7 @@ internal static class ReflectionCache
     public static readonly FieldInfo? NPowerContainerNodesField =
         AccessTools.Field(typeof(NPowerContainer), "_powerNodes");
     public static readonly MethodInfo? NPowerContainerAddMethod =
-        AccessTools.Method(typeof(NPowerContainer), "Add", new[] { typeof(PowerModel) });
+        AccessTools.Method(typeof(NPowerContainer), "Add", [typeof(PowerModel)]);
     public static readonly FieldInfo? NPowerContainerCreatureField =
         AccessTools.Field(typeof(NPowerContainer), "_creature");
     public static readonly MethodInfo? NPowerContainerConnectSignalsMethod =

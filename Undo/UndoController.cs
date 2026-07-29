@@ -12,7 +12,7 @@ internal static class UndoController
     // 액션 생성자 직후 한 틱 동안 VFX가 스폰되는 구간을 막기 위한 최소 쿨다운.
     private const int ActionCooldownMs = 50;
 
-    private static readonly List<CombatSnapshot> Stack = new();
+    private static readonly List<CombatSnapshot> Stack = [];
     public static bool IsRestoring { get; private set; }
     private static bool _turnBoundaryArmed;
     private static long _lastActionTimestampMs;

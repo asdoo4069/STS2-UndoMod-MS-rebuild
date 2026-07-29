@@ -58,7 +58,7 @@ public static class SnapshotPatches
     }
 }
 
-[HarmonyPatch(typeof(CombatManager), "Reset", new[] { typeof(bool) })]
+[HarmonyPatch(typeof(CombatManager), "Reset", [typeof(bool)])]
 public static class PatchCombatReset
 {
     [HarmonyPostfix]
