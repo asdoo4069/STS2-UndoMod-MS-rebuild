@@ -74,7 +74,7 @@ public static class PatchCombatReset
 
 // Reset보다 먼저 호출되므로, 전투 종료 즉시 스택을 비워
 // 전환 중에 단축키가 오래된 스냅샷에 접근하지 못하게 한다.
-[HarmonyPatch(typeof(CombatManager), "EndCombatInternal")]
+[HarmonyPatch(typeof(CombatManager), "EndCombatInternal", [])]
 public static class PatchEndCombatInternal
 {
     [HarmonyPrefix]
@@ -114,7 +114,7 @@ public static class PatchStartTurn
         {
             if (MultiplayerGate.IsDormant()) return;
 
-            var cs = ReflectionCache.CombatManagerStateField.GetValue(__instance) as CombatState;
+            var cs = ReflectionCache.GetCombatState(__instance);
             if (cs?.CurrentSide == CombatSide.Player)
             {
                 UndoController.ArmTurnBoundary();

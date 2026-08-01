@@ -16,8 +16,17 @@ namespace UndoModMS.Snapshot;
 internal static class ReflectionCache
 {
     // CombatManager
-    public static readonly FieldInfo CombatManagerStateField =
-        AccessTools.Field(typeof(CombatManager), "_state");
+    private static readonly FieldInfo? CombatManagerTurnStateField =
+       AccessTools.Field(typeof(CombatManager), "_turnState");
+    private static PropertyInfo? _turnStateStateProp;
+
+    public static CombatState? GetCombatState(CombatManager cm)
+    {
+        var turnState = CombatManagerTurnStateField?.GetValue(cm);
+        if (turnState == null) return null;
+        _turnStateStateProp ??= AccessTools.Property(turnState.GetType(), "State");
+        return _turnStateStateProp?.GetValue(turnState) as CombatState;
+    }
 
     // CombatState
     public static readonly FieldInfo CsAlliesField =

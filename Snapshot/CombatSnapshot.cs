@@ -61,7 +61,7 @@ internal sealed class CombatSnapshot
     {
         var cm = CombatManager.Instance;
         if (cm == null) return null;
-        if (ReflectionCache.CombatManagerStateField.GetValue(cm) is not CombatState cs) return null;
+        if (ReflectionCache.GetCombatState(cm) is not CombatState cs) return null;
 
         if (ReflectionCache.RunManagerStateProperty?.GetValue(RunManager.Instance) is not RunState runState) return null;
 
@@ -348,7 +348,7 @@ internal sealed class CombatSnapshot
         {
             var cm = CombatManager.Instance;
             if (cm == null) return false;
-            if (ReflectionCache.CombatManagerStateField.GetValue(cm) is not CombatState cs) return false;
+            if (ReflectionCache.GetCombatState(cm) is not CombatState cs) return false;
 
             foreach (var c in cs.Creatures)
             {
@@ -386,7 +386,7 @@ internal sealed class CombatSnapshot
         {
             var cm = CombatManager.Instance;
             if (cm == null) return;
-            if (ReflectionCache.CombatManagerStateField.GetValue(cm) is not CombatState cs) return;
+            if (ReflectionCache.GetCombatState(cm) is not CombatState cs) return;
 
             foreach (var c in cs.Creatures)
             {

@@ -259,6 +259,6 @@ internal static class UndoController
     {
         var cm = CombatManager.Instance;
         if (cm == null) return null;
-        return ReflectionCache.CombatManagerStateField.GetValue(cm) as CombatState;
+        return ReflectionCache.GetCombatState(cm);
     }
 }

@@ -21,7 +21,7 @@ internal static class SnapshotRestorer
     {
         var cm = CombatManager.Instance;
         if (cm == null) { UndoLogger.Warn("[Restore] CombatManager null"); return; }
-        if (ReflectionCache.CombatManagerStateField.GetValue(cm) is not CombatState cs) { UndoLogger.Warn("[Restore] CombatState null"); return; }
+        if (ReflectionCache.GetCombatState(cm) is not CombatState cs) { UndoLogger.Warn("[Restore] CombatState null"); return; }
         if (ReflectionCache.RunManagerStateProperty?.GetValue(RunManager.Instance) is not RunState runState) { UndoLogger.Warn("[Restore] RunState null"); return; }
 
         UndoLogger.Info($"[Restore] start → round={snap.RoundNumber} side={snap.CurrentSide} " +

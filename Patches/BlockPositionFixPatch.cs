@@ -46,7 +46,7 @@ internal static class BlockPositionFixPatch
                 if (!after.IsEqualApprox(__state.Value))
                 {
                     OriginalBlockPositionField?.SetValue(__instance, __state.Value);
-                    UndoLogger.Warn($"[BlockPosFix] originalBlockPosition {after} -> {__state.Value}");
+                    UndoLogger.Info($"[BlockPosFix] originalBlockPosition {after} -> {__state.Value}");
                 }
             }
             catch (Exception ex) { UndoLogger.Warn($"[BlockPosFix] failed: {ex.Message}"); }

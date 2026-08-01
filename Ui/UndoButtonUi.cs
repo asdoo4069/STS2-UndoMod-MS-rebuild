@@ -103,7 +103,7 @@ internal static class UndoButtonUi
         if (cm == null) return;
         var room = MegaCrit.Sts2.Core.Nodes.Rooms.NCombatRoom.Instance;
         if (room == null) return;
-        if (Snapshot.ReflectionCache.CombatManagerStateField?.GetValue(cm) is not MegaCrit.Sts2.Core.Combat.CombatState cs) return;
+        if (Snapshot.ReflectionCache.GetCombatState(cm) is not MegaCrit.Sts2.Core.Combat.CombatState cs) return;
 
         foreach (var c in cs.Creatures)
         {

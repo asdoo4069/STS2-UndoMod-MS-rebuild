@@ -20,7 +20,7 @@ internal static class OrbRefresher
         var room = NCombatRoom.Instance;
         var cm = CombatManager.Instance;
         if (room == null || cm == null) return;
-        if (ReflectionCache.CombatManagerStateField.GetValue(cm) is not CombatState cs) return;
+        if (ReflectionCache.GetCombatState(cm) is not CombatState cs) return;
 
         foreach (var ally in cs.Allies)
         {
