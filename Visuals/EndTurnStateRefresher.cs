@@ -21,8 +21,8 @@ internal static class EndTurnStateRefresher
         var cm = CombatManager.Instance;
         if (cm == null) return;
 
-        ClearCollection(ReflectionCache.CmPlayersReadyToEndTurnField?.GetValue(cm));
-        ClearCollection(ReflectionCache.CmPlayersReadyToBeginEnemyTurnField?.GetValue(cm));
+        ClearCollection(ReflectionCache.GetPlayersReadyToEndTurn(cm));
+        ClearCollection(ReflectionCache.GetPlayersReadyToBeginEnemyTurn(cm));
 
         TrySetBoolProp(cm, ReflectionCache.CmPlayerActionsDisabledProp, false);
         TrySetBoolProp(cm, AccessTools.Property(typeof(CombatManager), "IsPlayPhase"), true);

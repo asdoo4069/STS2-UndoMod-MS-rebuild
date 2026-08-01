@@ -498,7 +498,7 @@ internal sealed class CombatSnapshot
         var performed = new Dictionary<string, bool>();
         if (ReflectionCache.SmStatesProp?.GetValue(sm) is System.Collections.IDictionary states
             && ReflectionCache.MoveStatePerformedField != null
-            && ReflectionCache.MonsterStateType != null)
+            && ReflectionCache.MoveStateType != null)
         {
             foreach (System.Collections.DictionaryEntry e in states)
             {

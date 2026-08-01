@@ -16,16 +16,57 @@ namespace UndoModMS.Snapshot;
 internal static class ReflectionCache
 {
     // CombatManager
-    private static readonly FieldInfo? CombatManagerTurnStateField =
-       AccessTools.Field(typeof(CombatManager), "_turnState");
+    private static readonly FieldInfo? CombatManagerTurnStateField = AccessTools.Field(typeof(CombatManager), "_turnState");
     private static PropertyInfo? _turnStateStateProp;
+    private static PropertyInfo? _turnStatePlayersReadyToEndTurnProp;
+    private static PropertyInfo? _turnStatePlayersReadyToBeginEnemyTurnProp;
+    private static bool _turnStateStateChecked;
+    private static bool _turnStatePlayersReadyToEndTurnChecked;
+    private static bool _turnStatePlayersReadyToBeginEnemyTurnChecked;
 
     public static CombatState? GetCombatState(CombatManager cm)
     {
         var turnState = CombatManagerTurnStateField?.GetValue(cm);
         if (turnState == null) return null;
-        _turnStateStateProp ??= AccessTools.Property(turnState.GetType(), "State");
+        var turnStateType = turnState.GetType();
+        _turnStateStateProp ??= AccessTools.Property(turnStateType, "State");
+        if (!_turnStateStateChecked)
+        {
+            _turnStateStateChecked = true;
+            if (_turnStateStateProp == null)
+                UndoLogger.Warn($"[ReflectionCache] State property not found on {turnStateType.Name}");
+        }
         return _turnStateStateProp?.GetValue(turnState) as CombatState;
+    }
+
+    public static object? GetPlayersReadyToEndTurn(CombatManager cm)
+    {
+        var turnState = CombatManagerTurnStateField?.GetValue(cm);
+        if (turnState == null) return null;
+        var turnStateType = turnState.GetType();
+        _turnStatePlayersReadyToEndTurnProp ??= AccessTools.Property(turnStateType, "PlayersReadyToEndTurn");
+        if (!_turnStatePlayersReadyToEndTurnChecked)
+        {
+            _turnStatePlayersReadyToEndTurnChecked = true;
+            if (_turnStatePlayersReadyToEndTurnProp == null)
+                UndoLogger.Warn($"[ReflectionCache] PlayersReadyToEndTurn property not found on {turnStateType.Name}");
+        }
+        return _turnStatePlayersReadyToEndTurnProp?.GetValue(turnState);
+    }
+
+    public static object? GetPlayersReadyToBeginEnemyTurn(CombatManager cm)
+    {
+        var turnState = CombatManagerTurnStateField?.GetValue(cm);
+        if (turnState == null) return null;
+        var turnStateType = turnState.GetType();
+        _turnStatePlayersReadyToBeginEnemyTurnProp ??= AccessTools.Property(turnStateType, "PlayersReadyToBeginEnemyTurn");
+        if (!_turnStatePlayersReadyToBeginEnemyTurnChecked)
+        {
+            _turnStatePlayersReadyToBeginEnemyTurnChecked = true;
+            if (_turnStatePlayersReadyToBeginEnemyTurnProp == null)
+                UndoLogger.Warn($"[ReflectionCache] PlayersReadyToBeginEnemyTurn property not found on {turnStateType.Name}");
+        }
+        return _turnStatePlayersReadyToBeginEnemyTurnProp?.GetValue(turnState);
     }
 
     // CombatState
@@ -92,11 +133,11 @@ internal static class ReflectionCache
         AccessTools.Property(typeof(MonsterModel), "NextMove");
 
     public static readonly Type? MonsterMoveStateMachineType =
-        AccessTools.TypeByName(
-            "MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine.MonsterMoveStateMachine");
+        AccessTools.TypeByName("MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine.MonsterMoveStateMachine");
     public static readonly Type? MonsterStateType =
-        AccessTools.TypeByName(
-            "MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine.MonsterState");
+        AccessTools.TypeByName("MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine.MonsterState");
+    public static readonly Type? MoveStateType =
+        AccessTools.TypeByName("MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine.MoveState");
     public static readonly FieldInfo? SmCurrentStateField =
         MonsterMoveStateMachineType != null
             ? AccessTools.Field(MonsterMoveStateMachineType, "_currentState") : null;
@@ -117,8 +158,8 @@ internal static class ReflectionCache
         MonsterMoveStateMachineType != null
             ? AccessTools.Method(MonsterMoveStateMachineType, "ForceCurrentState") : null;
     public static readonly FieldInfo? MoveStatePerformedField =
-        MonsterStateType != null
-            ? AccessTools.Field(MonsterStateType, "_performedAtLeastOnce") : null;
+      MoveStateType != null
+          ? AccessTools.Field(MoveStateType, "_performedAtLeastOnce") : null;
 
     // RelicModel
     public static readonly FieldInfo? RelicDynamicVarsField =
@@ -155,7 +196,7 @@ internal static class ReflectionCache
 
     // PowerModel restoration helpers
     public static readonly MethodInfo? PowerInvokeAmountChangedMethod =
-        AccessTools.Method(typeof(PowerModel), "InvokeAmountChanged");
+        AccessTools.Method(typeof(PowerModel), "InvokeDisplayAmountChanged");
     public static readonly FieldInfo? PowerOwnerField =
         AccessTools.Field(typeof(PowerModel), "_owner");
 
@@ -309,10 +350,6 @@ internal static class ReflectionCache
         AccessTools.Method(typeof(CombatStateTracker), "NotifyCombatStateChanged");
 
     // CombatManager end-turn / phase state
-    public static readonly FieldInfo? CmPlayersReadyToEndTurnField =
-        AccessTools.Field(typeof(CombatManager), "_playersReadyToEndTurn");
-    public static readonly FieldInfo? CmPlayersReadyToBeginEnemyTurnField =
-        AccessTools.Field(typeof(CombatManager), "_playersReadyToBeginEnemyTurn");
     public static readonly PropertyInfo? CmPlayerActionsDisabledProp =
         AccessTools.Property(typeof(CombatManager), "PlayerActionsDisabled");
 
@@ -380,6 +417,7 @@ internal static class ReflectionCache
         Check(nameof(NextMoveProp), NextMoveProp);
         Check(nameof(MonsterMoveStateMachineType), MonsterMoveStateMachineType);
         Check(nameof(MonsterStateType), MonsterStateType);
+        Check(nameof(MoveStateType), MoveStateType);
         Check(nameof(SmCurrentStateField), SmCurrentStateField);
         Check(nameof(SmPerformedFirstMoveField), SmPerformedFirstMoveField);
         Check(nameof(MonsterStateIdProperty), MonsterStateIdProperty);
@@ -448,8 +486,6 @@ internal static class ReflectionCache
         Check(nameof(SkeletonSetSlotsToSetupPoseMethod), SkeletonSetSlotsToSetupPoseMethod);
         Check(nameof(HurtAnimIsPlayingMethod), HurtAnimIsPlayingMethod);
         Check(nameof(NotifyCombatStateChangedMethod), NotifyCombatStateChangedMethod);
-        Check(nameof(CmPlayersReadyToEndTurnField), CmPlayersReadyToEndTurnField);
-        Check(nameof(CmPlayersReadyToBeginEnemyTurnField), CmPlayersReadyToBeginEnemyTurnField);
         Check(nameof(CmPlayerActionsDisabledProp), CmPlayerActionsDisabledProp);
         Check(nameof(HandCurrentCardPlayField), HandCurrentCardPlayField);
         Check(nameof(HandCurrentModeField), HandCurrentModeField);
