@@ -1,3 +1,4 @@
+using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.GameActions;
@@ -21,6 +22,46 @@ public static class SnapshotPatches
         PatchAllCtors(harmony, typeof(EndPlayerTurnAction), prefix);
         PatchAllCtors(harmony, typeof(UsePotionAction), prefix);
         PatchAllCtors(harmony, typeof(DiscardPotionGameAction), prefix);
+
+        PatchEndCombatInternalTurnState(harmony);
+    }
+
+    // CheckWinCondition이 실제로 부르는 것은 이 오버로드(private, CombatTurnState 인자)이며,
+    // 무인자 EndCombatInternal()은 게임 어디서도 호출되지 않는 죽은 경로임.
+    // 이 오버로드는 async Task라 Postfix가 함수 본문 완료 시점이 아니라 진입 시점에 바로 실행되므로,
+    // 리턴된 Task에 continuation을 달아 실제 완료 후에 청소되도록 함.
+    private static void PatchEndCombatInternalTurnState(Harmony harmony)
+    {
+        var turnStateType = AccessTools.TypeByName("MegaCrit.Sts2.Core.Combat.CombatTurnState");
+        if (turnStateType == null) { UndoLogger.Warn("[Patch] CombatTurnState type not found"); return; }
+
+        var method = AccessTools.Method(typeof(CombatManager), "EndCombatInternal", [turnStateType]);
+        if (method == null) { UndoLogger.Warn("[Patch] EndCombatInternal(CombatTurnState) not found"); return; }
+
+        var postfix = AccessTools.Method(typeof(SnapshotPatches), nameof(EndCombatInternalTurnStatePostfix));
+        harmony.Patch(method, postfix: new HarmonyMethod(postfix));
+    }
+
+    public static void EndCombatInternalTurnStatePostfix(Task __result)
+    {
+        __result?.ContinueWith(_ =>
+        {
+            try
+            {
+                Callable.From(() =>
+                {
+                    UndoController.ClearStacks();
+                    UndoButtonUi.Uninstall();
+                    CombatSnapshot.IdleAnimCache.Clear();
+                    DeathAnimDelayPatch.FlushForCombatEnd();
+                    AnimDiePatch.ClearDetached();
+                }).CallDeferred();
+            }
+            catch (Exception ex)
+            {
+                UndoLogger.Warn($"[Patch] EndCombatInternal(turnState) cleanup failed: {ex.Message}");
+            }
+        });
     }
 
     private static void PatchAllCtors(Harmony harmony, Type type, MethodInfo prefix)
@@ -68,22 +109,6 @@ public static class PatchCombatReset
         UndoButtonUi.Uninstall();
         CombatSnapshot.IdleAnimCache.Clear();
         DeathAnimDelayPatch.ClearAll();
-        AnimDiePatch.ClearDetached();
-    }
-}
-
-// Reset보다 먼저 호출되므로, 전투 종료 즉시 스택을 비워
-// 전환 중에 단축키가 오래된 스냅샷에 접근하지 못하게 한다.
-[HarmonyPatch(typeof(CombatManager), "EndCombatInternal", [])]
-public static class PatchEndCombatInternal
-{
-    [HarmonyPrefix]
-    public static void Prefix()
-    {
-        UndoController.ClearStacks();
-        UndoButtonUi.Uninstall();
-        CombatSnapshot.IdleAnimCache.Clear();
-        DeathAnimDelayPatch.FlushForCombatEnd();
         AnimDiePatch.ClearDetached();
     }
 }
